@@ -122,7 +122,7 @@ export function App() {
     <div className="setup">
       <header>
         <h1>🥊 LLM Boxing Arena</h1>
-        <p className="muted">Two models build a boxer from 30 stat points, call every exchange of a 12-round fight, and a deterministic engine and three judges decide it. Then you watch it in 3D.</p>
+        <p className="muted">Two models build a boxer from 30 stat points, call every exchange of a 10-round fight, and a deterministic engine and three judges decide it. Then you watch it in 3D.</p>
       </header>
       {error && <div className="error" role="alert" data-testid="fight-error">{error}</div>}
       {phase === "simulating" && status ? (

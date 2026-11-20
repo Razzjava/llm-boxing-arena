@@ -1,6 +1,7 @@
 // Runs many seeded demo fights and reports win rates, endings and punch volume.
 import { runFight } from "./fight.js";
 import { DEMO_BUILDS, DEMO_CONTROLLERS, type DemoStyle } from "./controllers.js";
+import { EXCHANGES_PER_ROUND } from "./tuning.js";
 import type { EndMethod } from "./types.js";
 
 export interface BalanceReport {
@@ -8,6 +9,8 @@ export interface BalanceReport {
   matchups: { a: DemoStyle; b: DemoStyle; fights: number; winsA: number; winsB: number; draws: number }[];
   methods: Record<EndMethod, number>;
   stoppageRate: number;
+  /** KO or TKO in rounds 1–3. */
+  earlyStoppages: number;
   avgLandedPerRoundPerBoxer: number;
   avgThrownPerRoundPerBoxer: number;
   avgRounds: number;
@@ -29,6 +32,7 @@ export async function runBalance(fights = 500, firstSeed = 1): Promise<BalanceRe
   let roundsFought = 0;
   let knockdowns = 0;
   let fallbacks = 0;
+  let earlyStoppages = 0;
 
   for (let i = 0; i < fights; i++) {
     const m = matchups[i % matchups.length] as (typeof matchups)[number];
@@ -42,6 +46,7 @@ export async function runBalance(fights = 500, firstSeed = 1): Promise<BalanceRe
     if (res.winner === null) m.draws++;
     else if ((res.winner === "a") !== swap) m.winsA++;
     else m.winsB++;
+    if ((res.method === "KO" || res.method === "TKO") && res.round <= 3) earlyStoppages++;
     for (const r of log.rounds) {
       for (const x of r.exchanges) {
         for (const e of x.events) {
@@ -54,7 +59,7 @@ export async function runBalance(fights = 500, firstSeed = 1): Promise<BalanceRe
       }
     }
     // A stopped round counts as the fraction of exchanges fought.
-    roundsFought += log.rounds.reduce((sum, r) => sum + r.exchanges.length / 6, 0);
+    roundsFought += log.rounds.reduce((sum, r) => sum + r.exchanges.length / EXCHANGES_PER_ROUND, 0);
   }
 
   const stoppages = methods.KO + methods.TKO;
@@ -63,6 +68,7 @@ export async function runBalance(fights = 500, firstSeed = 1): Promise<BalanceRe
     matchups,
     methods,
     stoppageRate: stoppages / fights,
+    earlyStoppages,
     avgLandedPerRoundPerBoxer: landed / roundsFought / 2,
     avgThrownPerRoundPerBoxer: thrown / roundsFought / 2,
     avgRounds: roundsFought / fights,

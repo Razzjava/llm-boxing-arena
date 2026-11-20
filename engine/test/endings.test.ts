@@ -5,6 +5,7 @@ import { endRound } from "../src/round.js";
 import { createRng } from "../src/rng.js";
 import { runFight } from "../src/fight.js";
 import type { FightState } from "../src/types.js";
+import { ROUNDS } from "../src/tuning.js";
 import { bots, OUT, SLUG, SWARM, demoFight } from "./helpers.js";
 
 const bombs = { actions: ["hook", "uppercut", "cross"] };
@@ -86,12 +87,21 @@ describe("every ending is reachable", () => {
     expect(["SD", "MD", "draw"].some((m) => seen.has(m))).toBe(true);
   });
 
-  it("a fight that goes the distance lasts 12 rounds and has 12 rounds on every card", async () => {
+  it("a fight that goes the distance lasts 10 rounds and the cards total at most 100", async () => {
     for (let seed = 1; seed < 200; seed++) {
       const log = await runFight(OUT, SWARM, bots.outBoxer, bots.swarmer, seed);
       if (["UD", "SD", "MD", "draw"].includes(log.result.method)) {
-        expect(log.rounds).toHaveLength(12);
-        for (const c of log.result.scorecards) expect(c.rounds).toHaveLength(12);
+        expect(log.rounds).toHaveLength(ROUNDS);
+        expect(log.result.round).toBe(ROUNDS);
+        for (const c of log.result.scorecards) {
+          expect(c.rounds).toHaveLength(ROUNDS);
+          expect(c.totalA).toBe(c.rounds.reduce((sum, r) => sum + r.a, 0));
+          expect(c.totalB).toBe(c.rounds.reduce((sum, r) => sum + r.b, 0));
+          expect(c.totalA).toBeLessThanOrEqual(ROUNDS * 10);
+          expect(c.totalB).toBeLessThanOrEqual(ROUNDS * 10);
+          expect(c.totalA).toBeGreaterThanOrEqual(ROUNDS * 6);
+          expect(c.totalB).toBeGreaterThanOrEqual(ROUNDS * 6);
+        }
         expect(log.result.time).toBe(180);
         return;
       }

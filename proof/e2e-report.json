@@ -1,5 +1,5 @@
 {
-  "started": "2026-11-20T00:00:11.217Z",
+  "started": "2026-11-20T14:00:59.600Z",
   "checks": {
     "setup screen renders": {
       "ok": true
@@ -32,16 +32,23 @@
     "reload clears keys": {
       "ok": true
     },
+    "audio controls render muted until a click": {
+      "ok": true
+    },
+    "HUD bars have a visible legend and tooltip": {
+      "ok": true,
+      "detail": "Head: 100%. Head health. Clean power shots here score knockdowns, and a low bar is how the referee or a count ends the fight."
+    },
     "round 1 renders with HUD": {
       "ok": true,
-      "detail": "ROUND 10:46"
+      "detail": "ROUND 10:26"
     },
     "fight has a knockdown": {
       "ok": true,
       "detail": {
-        "T": 1298.98,
+        "T": 1410.15,
         "side": "b",
-        "segment": 47
+        "segment": 51
       }
     },
     "knockdown commentary shown": {
@@ -52,13 +59,13 @@
     },
     "result card with scorecards": {
       "ok": true,
-      "detail": "×Big Tom Hale “The Hammer” winsby KO · round 7 at 2:29counted out after a cross🔴 Demo bot (slugger) vs 🔵 Demo bot (swarmer) · seed 11ScorecardsJudgeR1R2R3R4R5"
+      "detail": "×Big Tom Hale “The Hammer” winsby TKO · round 10 at 0:58referee waved it off after a knockdown🔴 Demo bot (slugger) vs 🔵 Demo bot (swarmer) · seed 11Scorecards"
     },
     "fight log downloads (no keys inside)": {
       "ok": true,
       "detail": {
         "file": "fight-log-seed11.json",
-        "bytes": 199984
+        "bytes": 273192
       }
     },
     "low-quality toggle": {
@@ -73,7 +80,7 @@
       "detail": {
         "file": "fight-demo.webm",
         "approxSeconds": 23,
-        "bytes": 11326095
+        "bytes": 10016724
       }
     },
     "proxy server log never contains the key": {
@@ -88,17 +95,22 @@
     }
   },
   "timeline": {
-    "dur": 1326,
+    "dur": 1818.15,
     "kds": [
       {
-        "T": 1298.98,
+        "T": 1410.15,
         "side": "b",
-        "segment": 47
+        "segment": 51
+      },
+      {
+        "T": 1791.13,
+        "side": "b",
+        "segment": 65
       }
     ],
-    "res": 1310
+    "res": 1802.15
   },
-  "resultWaitMs": 7513,
-  "finished": "2026-11-20T00:04:33.745Z",
+  "resultWaitMs": 4729,
+  "finished": "2026-11-20T14:02:07.147Z",
   "allPassed": true
 }

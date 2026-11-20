@@ -1,7 +1,7 @@
 // Every balance number lives here so tuning never means hunting through logic.
 import type { Punch, Tactic } from "./types.js";
 
-export const ROUNDS = 12;
+export const ROUNDS = 10;
 export const EXCHANGES_PER_ROUND = 6;
 export const EXCHANGE_SECONDS = 30;
 
@@ -115,8 +115,10 @@ export const KNOCKDOWN = {
 };
 
 export const REFEREE = {
-  stopAfterGetUpHealth: 12,
-  stopAfterGetUpChance: 0.6,
+  // Was 12 / 0.6. A slightly quicker wave-off replaces the stoppages that
+  // used to land in rounds 11 and 12, without ending the early rounds.
+  stopAfterGetUpHealth: 16,
+  stopAfterGetUpChance: 0.75,
   oneSidedDamage: 5, // head damage in one exchange
   oneSidedHealth: 25,
   oneSidedChance: 0.5,
@@ -138,8 +140,11 @@ export const CUTS = {
 };
 
 export const RECOVERY = {
-  headPerRound: 4,
-  bodyPerRound: 3,
+  // A 10-round bout has less time for damage to pile up. A little less healing
+  // between rounds (was 4 head / 3 body) keeps stoppages in the middle rounds
+  // instead of almost every fight going to the cards.
+  headPerRound: 3,
+  bodyPerRound: 2,
 };
 
 export const JUDGING = {

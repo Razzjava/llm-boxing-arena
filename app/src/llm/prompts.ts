@@ -1,7 +1,7 @@
 // What the models are told. Short on purpose: every exchange is a separate call.
-import type { FightStateView } from "@llm-boxing-arena/engine";
+import { EXCHANGES_PER_ROUND, ROUNDS, type FightStateView } from "@llm-boxing-arena/engine";
 
-export const RULES = `You are an AI boxer in a simulated 12-round boxing match (6 exchanges of 30 seconds per round).
+export const RULES = `You are an AI boxer in a simulated ${ROUNDS}-round boxing match (${EXCHANGES_PER_ROUND} exchanges of 30 seconds per round).
 A deterministic engine resolves the punches; you only choose tactics.
 Actions (pick 1-3 per exchange; they split the 30 seconds evenly):
 - jab: 4 quick, accurate, cheap lead-hand shots. cross: 3 rear-hand power shots.
