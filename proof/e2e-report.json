@@ -1,0 +1,104 @@
+{
+  "started": "2026-11-20T00:00:11.217Z",
+  "checks": {
+    "setup screen renders": {
+      "ok": true
+    },
+    "Go plan shows the use-at-own-risk warning": {
+      "ok": true,
+      "detail": "⚠️ Use at your own risk: OpenCode says Go is meant for coding-agent traffic, and they monitor for misuse."
+    },
+    "OpenCode Console model list loads in the picker": {
+      "ok": true,
+      "detail": {
+        "models": 83,
+        "source": "83 models loaded live"
+      }
+    },
+    "fake key through proxy returns a readable OpenCode 401": {
+      "ok": true,
+      "detail": "RED corner (beam-free): OpenCode 401: Invalid credential"
+    },
+    "error text does not echo the key": {
+      "ok": true
+    },
+    "OpenCode Go model list loads in the picker": {
+      "ok": true,
+      "detail": {
+        "models": 31,
+        "source": "31 models loaded live"
+      }
+    },
+    "reload clears keys": {
+      "ok": true
+    },
+    "round 1 renders with HUD": {
+      "ok": true,
+      "detail": "ROUND 10:46"
+    },
+    "fight has a knockdown": {
+      "ok": true,
+      "detail": {
+        "T": 1298.98,
+        "side": "b",
+        "segment": 47
+      }
+    },
+    "knockdown commentary shown": {
+      "ok": true
+    },
+    "slow-mo knockdown replay plays": {
+      "ok": true
+    },
+    "result card with scorecards": {
+      "ok": true,
+      "detail": "×Big Tom Hale “The Hammer” winsby KO · round 7 at 2:29counted out after a cross🔴 Demo bot (slugger) vs 🔵 Demo bot (swarmer) · seed 11ScorecardsJudgeR1R2R3R4R5"
+    },
+    "fight log downloads (no keys inside)": {
+      "ok": true,
+      "detail": {
+        "file": "fight-log-seed11.json",
+        "bytes": 199984
+      }
+    },
+    "low-quality toggle": {
+      "ok": true
+    },
+    "uploaded log replays identically via replayFight": {
+      "ok": true,
+      "detail": "Replayed with the engine: identical to the saved fight."
+    },
+    "video recorded (20–40 s target)": {
+      "ok": true,
+      "detail": {
+        "file": "fight-demo.webm",
+        "approxSeconds": 23,
+        "bytes": 11326095
+      }
+    },
+    "proxy server log never contains the key": {
+      "ok": true,
+      "detail": [
+        "[proxy] POST /opencode/inference/openai/v1/chat/completions -> 401"
+      ]
+    },
+    "no page errors": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "timeline": {
+    "dur": 1326,
+    "kds": [
+      {
+        "T": 1298.98,
+        "side": "b",
+        "segment": 47
+      }
+    ],
+    "res": 1310
+  },
+  "resultWaitMs": 7513,
+  "finished": "2026-11-20T00:04:33.745Z",
+  "allPassed": true
+}

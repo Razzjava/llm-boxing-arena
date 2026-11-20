@@ -1,0 +1,7 @@
+{
+  "name": "llm-boxing-arena-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": { "e2e": "node run-e2e.mjs" },
+  "devDependencies": { "playwright": "^1.65.1" }
+}

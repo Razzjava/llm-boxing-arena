@@ -1,0 +1,2 @@
+  ➜  Local:   http://localhost:4173/
+[proxy] POST /opencode/inference/openai/v1/chat/completions -> 401
