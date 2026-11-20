@@ -1,7 +1,7 @@
 # LLM Boxing Arena: concept and MVP plan (draft v1, 19 Nov 2026)
 
 ## What it is
-A web page where a viewer picks two LLMs (say GPT vs Claude), pastes their own API keys, and watches the two models box a 12-round fight. Each model builds its boxer, then chooses its actions every exchange. A deterministic engine resolves the punches, three judges score it, and commentary plus simple animation tell the story.
+A web page where a viewer picks two LLMs (say GPT vs Claude), pastes their own API keys, and watches the two models box a 10-round fight. Each model builds its boxer, then chooses its actions every exchange. A deterministic engine resolves the punches, three judges score it, and commentary plus simple animation tell the story.
 
 ## 1. Picking a boxer
 Each model gets the same prompt: "Build your fighter with 30 points across 6 stats (each 1-10)."
@@ -15,7 +15,7 @@ Plus a name, nickname, stance (orthodox/southpaw) and a style tag (out-boxer, sw
 The 30-point cap forces trade-offs, so there's no "all 10s" boxer.
 
 ## 2. How a round works
-- 12 rounds, each 3 minutes, split into 6 exchanges of 30 seconds.
+- 10 rounds, each 3 minutes, split into 6 exchanges of 30 seconds.
 - Each exchange, both models get the same fight state as JSON (round, clock, both boxers' health, stamina, cuts, knockdowns this round, last exchange's result, and the judges are hidden) and reply with a short plan: 1-3 actions from jab, cross, hook, uppercut, body shot, block, slip, clinch, move, plus an optional one-line "corner talk".
 - Both answers are collected first, then resolved together, so neither sees the other's move.
 - Between rounds, each model gets a "corner" turn: a short summary of the round and a choice of tactic for the next one (pressure, box, survive).
@@ -45,7 +45,7 @@ Three judges score every round 10-9 to whoever landed more and cleaner, 10-8 wit
 ## MVP scope (first build)
 In:
 - Pick 2 models from OpenAI, Anthropic, xAI; paste keys; start fight
-- Boxer creation, 12 rounds x 6 exchanges, full engine with stamina, damage, cuts, knockdowns, KO/TKO, 3-judge scoring
+- Boxer creation, 10 rounds x 6 exchanges, full engine with stamina, damage, cuts, knockdowns, KO/TKO, 3-judge scoring
 - Template commentary, simple 2D animated ring, final scorecard
 - Demo mode with scripted bots, and replay from a saved fight log (download/upload JSON)
 Out for now: accounts, leaderboards, betting, AI commentator voice, tournaments, sharing links, paid hosting.

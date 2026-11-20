@@ -1,6 +1,8 @@
 // Rough cost of one fight for one corner, from a model list's published prices (USD per 1M tokens).
-// One fight = 1 build call + 12 corner calls + up to 72 exchange calls.
-export const CALLS_PER_FIGHT = 85;
+// One fight = 1 build call + one corner call per round + up to one call per exchange.
+import { EXCHANGES_PER_ROUND, ROUNDS } from "@llm-boxing-arena/engine";
+
+export const CALLS_PER_FIGHT = 1 + ROUNDS + ROUNDS * EXCHANGES_PER_ROUND;
 export const INPUT_TOKENS_PER_CALL = 1100;
 export const OUTPUT_TOKENS_PER_CALL = 250; // allows a little reasoning
 

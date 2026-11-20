@@ -1,4 +1,4 @@
-// runFight: the whole 12 rounds, driven by two controllers (scripted bots now, LLMs later).
+// runFight: the whole bout (see ROUNDS), driven by two controllers (scripted bots now, LLMs later).
 import type { BoxerBuild, FightEvent, FightResult, FightState, Plan, Side, Tactic } from "./types.js";
 import { createRng, type Rng } from "./rng.js";
 import { normalizeBuild } from "./boxer.js";

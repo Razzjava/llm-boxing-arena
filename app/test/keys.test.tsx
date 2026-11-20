@@ -65,9 +65,15 @@ describe("API keys", () => {
     vi.unstubAllGlobals();
   });
 
-  it("app source never touches browser storage APIs", () => {
-    const banned = /\b(localStorage|sessionStorage|indexedDB)\s*[.[]|document\.cookie|caches\.open/;
-    const hits = sourceFiles(join(__dirname, "../src")).filter((f) => banned.test(readFileSync(f, "utf8")));
-    expect(hits).toEqual([]);
+  it("app source never touches browser storage except audio preferences", () => {
+    const files = sourceFiles(join(__dirname, "../src"));
+    const read = (f: string) => readFileSync(f, "utf8");
+    const call = /\b(localStorage|sessionStorage|indexedDB)\s*[.[]|document\.cookie|caches\.open/;
+    expect(files.filter((f) => call.test(read(f)))).toEqual([]);
+    const mentions = files.filter((f) => /\bwindow\.localStorage\b/.test(read(f)));
+    expect(mentions.map((f) => f.split("src/").pop())).toEqual(["audio/prefs.ts"]);
+    const src = read(mentions[0] as string);
+    expect(src).toContain('AUDIO_STORAGE_KEY = "arena-audio"');
+    expect(src).not.toMatch(/sk-/);
   });
 });

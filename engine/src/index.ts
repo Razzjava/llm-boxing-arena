@@ -10,3 +10,4 @@ export { runFight, replayFight, summarize, type Controller, type FightLog, type 
 export { DEMO_BUILDS, DEMO_CONTROLLERS, type DemoStyle } from "./controllers.js";
 export { fightSummary } from "./summary.js";
 export { runBalance, type BalanceReport } from "./balance.js";
+export { ROUNDS, EXCHANGES_PER_ROUND, EXCHANGE_SECONDS } from "./tuning.js";

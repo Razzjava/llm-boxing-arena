@@ -4,3 +4,9 @@
 - stool.glb: tevy.dev Boxing Corner Stool v1, https://tevy.dev/models/boxing-corner-stool (CC0-1.0)
 - crowd.glb: tevy.dev Grandstand Crowd v1, https://tevy.dev/models/grandstand-crowd (CC0-1.0)
 - ../basis/basis_transcoder.*: from three.js examples/jsm/libs/basis (Apache-2.0)
+- sfx/punch-light.ogg: Kenney Impact Sounds, impactPunch_medium_000.ogg. https://kenney.nl/assets/impact-sounds (CC0). The pack has no lighter punch, so the medium punch hit is the jab.
+- sfx/punch-heavy.ogg: Kenney Impact Sounds, impactPunch_heavy_000.ogg. https://kenney.nl/assets/impact-sounds (CC0)
+- sfx/bell.ogg: Kenney Impact Sounds, impactBell_heavy_000.ogg. https://kenney.nl/assets/impact-sounds (CC0)
+- sfx/count.ogg: Kenney UI Audio, click1.ogg. https://kenney.nl/assets/ui-audio (CC0)
+- sfx/crowd-loop.ogg: trimmed from StarNinjas, Crowd Shouting/Speaking Ambience, crowd_shouting.ogg. https://opengameart.org/content/crowd-shoutingspeaking-ambience (CC0)
+- sfx/crowd-roar.ogg: Nocturnal_Vanguard, Cheers, cheers.ogg. https://opengameart.org/content/cheers-0 (CC0)

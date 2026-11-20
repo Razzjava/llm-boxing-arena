@@ -1,6 +1,6 @@
 // Turns a model into an engine Controller. The engine already falls back to block+move (or "box")
 // on junk, errors and timeouts and flags it in the log; this adds JSON extraction and a circuit
-// breaker so a dead key doesn't make 85 failing calls.
+// breaker so a dead key doesn't make a failing call on every exchange.
 import type { Controller, FightStateView } from "@llm-boxing-arena/engine";
 import { extractJson } from "../providers/json";
 import { ProviderError } from "../providers/http";

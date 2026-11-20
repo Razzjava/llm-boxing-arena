@@ -1,5 +1,5 @@
 // The watch screen: 3D canvas, HUD, commentary, playback controls, result card.
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import type { SavedFight } from "../fight/runArenaFight";
 import { fightFileName, serializeFight } from "../fight/savedFight";
@@ -12,9 +12,26 @@ import { CameraRig, type CameraChoice } from "../scene/CameraRig";
 import { rateFactorAt } from "../scene/choreo";
 import { Hud } from "./Hud";
 import { ResultCard } from "./ResultCard";
+import { AudioControls } from "./AudioControls";
+import { ArenaPlayer } from "../audio/player";
+import { browserAudioStorage, readAudioPrefs, writeAudioPrefs, type AudioPrefs } from "../audio/prefs";
 
 function Clock({ tl, store }: { tl: Timeline; store: PlaybackStore }) {
   useFrame((_, dt) => store.tick(dt * rateFactorAt(tl, store.T)), -1);
+  return null;
+}
+
+function AudioClock({ store, step }: { store: PlaybackStore; step: (from: number, to: number) => void }) {
+  const prev = useRef(store.T);
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  useFrame(() => {
+    const to = store.T;
+    const from = prev.current;
+    if (to === from) return;
+    prev.current = to;
+    stepRef.current(from, to);
+  });
   return null;
 }
 
@@ -44,7 +61,28 @@ export default function Watch({ fight, info, onExit }: { fight: SavedFight; info
   const [quality, setQuality] = useState<"high" | "low">("high");
   const [hideResult, setHideResult] = useState(false);
   const [liveCam, setLiveCam] = useState("wide");
+  const [prefs, setPrefs] = useState<AudioPrefs>(() => readAudioPrefs(browserAudioStorage()));
+  const player = useMemo(() => new ArenaPlayer(), []);
   useTicker(100);
+  useEffect(() => {
+    writeAudioPrefs(browserAudioStorage(), prefs);
+  }, [prefs]);
+  useEffect(() => {
+    const unlock = () => player.unlock();
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+      player.stop();
+    };
+  }, [player]);
+  const onAudio = (next: AudioPrefs) => {
+    player.unlock();
+    if (next.muted || !next.commentary) player.cancelSpeech();
+    if (next.muted) player.stopCrowd();
+    setPrefs(next);
+  };
   useEffect(() => {
     // Dev-only handle for poking at playback from the console. Holds no keys.
     // Read-only inspection/seek hook used by the Playwright proof run (holds no keys).
@@ -78,6 +116,10 @@ export default function Watch({ fight, info, onExit }: { fight: SavedFight; info
       >
         <Suspense fallback={null}>
           <Clock tl={tl} store={store} />
+          <AudioClock
+            store={store}
+            step={(from, to) => player.step({ from, to, muted: prefs.muted, volume: prefs.volume, commentary: prefs.commentary, timeline: tl, lines })}
+          />
           <Arena tl={tl} store={store} quality={quality} />
           <Fighters tl={tl} store={store} quality={quality} />
           <CameraRig tl={tl} store={store} choice={camera} onCamera={setLiveCam} />
@@ -117,6 +159,8 @@ export default function Watch({ fight, info, onExit }: { fight: SavedFight; info
         <button type="button" onClick={() => setQuality(quality === "high" ? "low" : "high")} data-testid="quality">
           Quality: {quality}
         </button>
+        <span className="sep" />
+        <AudioControls prefs={prefs} onChange={onAudio} />
         <button type="button" onClick={() => download(fight)} data-testid="download-log">
           ⬇ Fight log
         </button>

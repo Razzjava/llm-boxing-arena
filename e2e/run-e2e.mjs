@@ -29,10 +29,20 @@ for (let i = 0; i < 60; i++) {
   await new Promise((r) => setTimeout(r, 500));
 }
 
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const browser = await chromium.launch({
+  ...(process.env.ARENA_CHROME ? { channel: 'chrome' } : {}),
+  args: [
+    ...(process.env.ARENA_CHROME ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
+    '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist',
+  ],
+});
 const shot = (page, name) => page.screenshot({ path: path.join(proof, name) });
 const errors = [];
-const watchErrors = (page) => { page.on('pageerror', (e) => errors.push(e.message)); page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); }); };
+const watchErrors = (page) => {
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(`${m.text()} @ ${m.location().url}`); });
+  page.on('response', (r) => { if (r.status() === 404) errors.push(`404 ${r.url()}`); });
+};
 
 async function startDemo(page, seed = '11') {
   await page.fill('[data-testid=seed]', seed);
@@ -101,13 +111,26 @@ try {
   const tl = await page.evaluate(() => ({ dur: window.__arena.tl.duration, kds: window.__arena.tl.knockdowns, res: window.__arena.tl.resultStart }));
   report.timeline = tl;
   await waitT(page, 30);
+  await page.click('[data-testid=play-pause]');
+  await shot(page, '11-audio-controls.png');
+  check('audio controls render muted until a click', /Sound off/i.test(await page.textContent('[data-testid=audio-mute]') ?? '') && await page.isVisible('[data-testid=audio-volume]') && await page.isVisible('[data-testid=audio-commentary]'));
+  const legend = await page.locator('[data-testid=bar-head]').first().getAttribute('aria-label');
+  await page.locator('[data-testid=bar-head]').first().hover();
+  await page.waitForTimeout(300);
+  await shot(page, '10-bar-legend.png');
+  check('HUD bars have a visible legend and tooltip', /Head/.test(await page.textContent('[data-testid=hud]') ?? '') && /knockdown/i.test(legend ?? ''), legend);
+  await page.mouse.move(640, 400);
   await shot(page, '04-round1.png');
+  await page.click('[data-testid=play-pause]');
   check('round 1 renders with HUD', await page.isVisible('[data-testid=hud-clock]'), await page.textContent('[data-testid=hud-clock]'));
 
   const kd = tl.kds[0];
   check('fight has a knockdown', !!kd, kd);
   if (kd) {
-    await waitT(page, kd.T + 0.6);
+    // A full bout at 4x is several minutes of WebGL. Jump to just before the
+    // knockdown and play through it, so the count and the replay still run.
+    await page.evaluate((T) => { window.__arena.store.T = Math.max(0, T - 12); window.__arena.store.playing = true; }, kd.T);
+    await waitT(page, kd.T + 0.6, 90000);
     await page.click('[data-testid=play-pause]');
     await page.waitForTimeout(400);
     await shot(page, '05-knockdown.png');
@@ -119,7 +142,8 @@ try {
     check('slow-mo knockdown replay plays', true);
   }
   const t0 = Date.now();
-  await page.waitForSelector('[data-testid=result-card]', { timeout: 240000 });
+  await page.evaluate(() => { window.__arena.store.skipToResult(); });
+  await page.waitForSelector('[data-testid=result-card]', { timeout: 90000 });
   await page.waitForTimeout(800);
   await shot(page, '07-final-scorecard.png');
   const resultText = await page.textContent('[data-testid=result-card]');
@@ -159,15 +183,16 @@ try {
   await vpage.goto(BASE + '/?e2e');
   await startDemo(vpage);
   await vpage.click('[data-testid=speed-2]');
-  await vpage.waitForTimeout(9000); // intro + early round 1 at 2x
+  await vpage.waitForTimeout(4000); // intro + early round 1 at 2x
   await vpage.click('[data-testid=speed-4]');
   if (kd) {
-    await vpage.evaluate((T) => { window.__arena.store.T = T; }, kd.T - 10);
-    await vpage.waitForSelector('[data-testid=replay-banner]', { timeout: 60000 });
-    await vpage.waitForSelector('[data-testid=replay-banner]', { state: 'detached', timeout: 60000 });
+    await vpage.evaluate((T) => { window.__arena.store.T = Math.max(0, T - 6); window.__arena.store.playing = true; }, kd.T);
+    await vpage.waitForSelector('[data-testid=replay-banner]', { timeout: 30000 });
+    await vpage.waitForSelector('[data-testid=replay-banner]', { state: 'detached', timeout: 30000 });
   }
-  await vpage.waitForSelector('[data-testid=result-card]', { timeout: 60000 });
-  await vpage.waitForTimeout(2500);
+  await vpage.evaluate(() => { window.__arena.store.skipToResult(); });
+  await vpage.waitForSelector('[data-testid=result-card]', { timeout: 30000 });
+  await vpage.waitForTimeout(1500);
   const video = vpage.video();
   await vctx.close();
   const vSecs = (Date.now() - vStart) / 1000;
@@ -185,7 +210,7 @@ try {
   const log = serverLog.join('');
   fs.writeFileSync(path.join(proof, 'preview-server.log'), log);
   check('proxy server log never contains the key', !log.includes(FAKE_KEY), log.split('\n').filter((l) => l.includes('[proxy]')));
-  const ignorable = (m) => /Failed to load resource.*(401|400)|status of 40[01]/i.test(m);
+  const ignorable = (m) => /favicon\.ico/i.test(m) || /Failed to load resource.*(401|400)|status of 40[01]/i.test(m);
   const realErrors = errors.filter((m) => !ignorable(m));
   check('no page errors', realErrors.length === 0, realErrors.slice(0, 5));
   report.finished = new Date().toISOString();

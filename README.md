@@ -1,6 +1,6 @@
 # LLM Boxing Arena
 
-Two language models each build a boxer from 30 stat points, then call every exchange of a 12-round fight.
+Two language models each build a boxer from 30 stat points, then call every exchange of a 10-round fight.
 A deterministic, seeded TypeScript engine resolves the punches and three judges score it. The app simulates
 the whole fight first (with a "thinking" screen showing who is being asked what), then plays it back in a
 3D ring: referee, corners, crowd, commentary, knockdown replays and scorecards.
@@ -80,7 +80,7 @@ There is a test that sends a secret through it and checks the secret never appea
   and they monitor for misuse.*
 
 Only chat models are listed, grouped by family, with context size and a rough cost-per-fight estimate
-(about 85 calls of ~1,100 input + ~250 output tokens; treat it as a ballpark). Each model is called in the
+(about 71 calls of ~1,100 input + ~250 output tokens; treat it as a ballpark). Each model is called in the
 API style OpenCode lists for it (chat-completions, responses, messages or generate-content). Every OpenCode
 call sends `x-opencode-client: llm-boxing-arena/0.1` and an `x-opencode-session` id that is unique per
 fighter per fight. Direct providers load their own model lists with your key and fall back to a built-in list
@@ -90,11 +90,12 @@ if that fails (you can also type a custom model id).
 
 Pick "Demo bot" in either corner (out-boxer, swarmer or slugger), set a seed and press **Fight!**.
 Same seed and same answers always give the same fight. Seed 11 with red slugger vs blue swarmer ends in a
-round-7 knockout, handy for seeing the knockdown, count, replay and hand raise.
+round-10 stoppage after a knockdown, handy for seeing the knockdown, count, replay and hand raise.
 
 Playback controls: play/pause (space bar), 1x / 2x / 4x, skip to result, knockdown replays on/off,
-cameras (auto / wide / ringside / shoulder; auto also cuts to corner and replay shots), and a low-quality
-toggle (fewer crowd stands, no shadows, lower pixel ratio).
+cameras (auto / wide / ringside / shoulder; auto also cuts to corner and replay shots), a low-quality
+toggle (fewer crowd stands, no shadows, lower pixel ratio), and sound: a mute button, a volume slider
+and a spoken-commentary toggle. Sound stays off until you turn it on, so the browser is allowed to play it.
 
 ## Fight logs and replay
 
@@ -137,7 +138,9 @@ downloads and re-uploads the log, and toggles low quality.
 | `assets/crowd.glb` | tevy.dev *Grandstand Crowd v1*, https://tevy.dev/models/grandstand-crowd | CC0 1.0 |
 | `basis/basis_transcoder.*` | copied from three.js (`examples/jsm/libs/basis`), needed to decode the KTX2 textures | Apache-2.0 |
 
-Credit is not required by CC0, but thanks to Quaternius and tevy.dev. No Mixamo, Rokoko, Unity Asset Store
+Sound effects (punches, bell, count, crowd) are CC0 too. Sources and licences are in `app/public/assets/CREDITS.md`.
+
+Credit is not required by CC0, but thanks to Quaternius, tevy.dev, Kenney and the OpenGameArt authors. No Mixamo, Rokoko, Unity Asset Store
 or Quaternius-QAL files are used, nothing was bought and no accounts were made.
 
 The Quaternius FBX files were converted to GLB by loading them with three.js `FBXLoader`, scaling by 0.01 and
@@ -160,5 +163,5 @@ the winner's raised hand.
 - The Quaternius *Universal Animation Library* (also CC0) was not used: its itch.io download needs an
   interactive flow, so only the 2019 Ultimate pack is shipped.
 - Models are the same base character recoloured, so boxers differ by colour and build, not face.
-- Long LLM fights take a while to simulate (about 85 calls per fighter); the thinking screen shows progress.
+- Long LLM fights take a while to simulate (about 71 calls per fighter); the thinking screen shows progress.
 - The 3D view is built for desktop; it runs on mobile but the HUD is cramped.

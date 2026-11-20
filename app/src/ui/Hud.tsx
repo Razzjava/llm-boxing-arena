@@ -3,10 +3,44 @@ import type { SavedFight } from "../fight/runArenaFight";
 import type { Vitals } from "../playback/timeline";
 import type { Line } from "../playback/commentary";
 
-function Bar({ value, kind }: { value: number; kind: "head" | "body" | "stamina" }) {
+const BARS = {
+  head: {
+    label: "Head",
+    tip: "Head health. Clean power shots here score knockdowns, and a low bar is how the referee or a count ends the fight.",
+  },
+  body: {
+    label: "Body",
+    tip: "Body health. Body shots drain this and also sap stamina, so the next exchanges cost more.",
+  },
+  stamina: {
+    label: "Stamina",
+    tip: "Energy left this round. Low stamina weakens power, speed and defence until the break.",
+  },
+} as const;
+
+function Bar({ value, kind }: { value: number; kind: keyof typeof BARS }) {
+  const bar = BARS[kind];
+  const pct = Math.round(Math.max(0, Math.min(100, value)));
+  const text = `${bar.label}: ${pct}%. ${bar.tip}`;
   return (
-    <div className={`bar ${kind}`} title={`${kind} ${Math.round(value)}`}>
-      <div style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+    <div className="bar-row">
+      <span className="bar-label">{bar.label}</span>
+      <div className="bar-track">
+        <div
+          className={`bar ${kind}`}
+          role="meter"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct}
+          aria-label={text}
+          title={text}
+          tabIndex={0}
+          data-testid={`bar-${kind}`}
+        >
+          <div className="fill" style={{ width: `${pct}%` }} />
+        </div>
+        <span className="bar-tip" role="tooltip">{bar.tip}</span>
+      </div>
     </div>
   );
 }

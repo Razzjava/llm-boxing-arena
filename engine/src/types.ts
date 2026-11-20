@@ -98,7 +98,7 @@ export interface Scorecard {
 export type JudgeBias = "aggression" | "clean punching" | "defence";
 
 export interface FightState {
-  round: number; // 1-12
+  round: number; // 1-10
   exchange: number; // 1-6, the next exchange to be fought
   a: BoxerState;
   b: BoxerState;
