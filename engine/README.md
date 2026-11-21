@@ -19,6 +19,7 @@ const log = await runFight(buildA, buildB, controllerA, controllerB, seed);
 //   view.phase === "corner"   -> return { tactic: "pressure" | "box" | "survive", talk? }
 //   view.phase === "exchange" -> return { actions: [1-3 of jab|cross|hook|uppercut|body|block|slip|clinch|move], talk? }
 // Junk, a thrown error or a timeout (default 30s) -> block + move (or "box" in the corner), flagged in the log.
+// Controllers are asked one at a time (A, then B). The deadline aborts the signal passed into the controller.
 
 const again = await replayFight(JSON.parse(savedJson)); // identical to the original log
 ```

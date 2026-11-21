@@ -8,8 +8,12 @@ import { endRound } from "./round.js";
 import { sanitizeActions, sanitizeTactic, type CleanPlan } from "./plans.js";
 import { EXCHANGES_PER_ROUND } from "./tuning.js";
 
-/** A controller sees the fight and returns a plan. Async so an LLM call can sit behind it. */
-export type Controller = (view: FightStateView) => Promise<Plan | unknown> | Plan | unknown;
+/**
+ * A controller sees the fight and returns a plan. Async so an LLM call can sit behind it.
+ * `signal` aborts when the answer deadline passes. In-flight model calls must stop on it
+ * so the next call cannot overlap a timed-out one.
+ */
+export type Controller = (view: FightStateView, signal?: AbortSignal) => Promise<Plan | unknown> | Plan | unknown;
 
 export interface LoggedPlan {
   actions: CleanPlan["actions"];
@@ -52,7 +56,7 @@ export interface FightLog {
 }
 
 export interface RunOptions {
-  /** Max wait for a controller answer before falling back. Default 30s. */
+  /** Max wait for one controller answer before aborting it and falling back. Default 30s. */
   timeoutMs?: number;
 }
 
@@ -118,21 +122,19 @@ async function simulate(
   let last: Record<Side, string[]> = { a: [], b: [] };
 
   while (!state.result) {
-    const [cornerA, cornerB] = await Promise.all([
-      source.corner("a", viewFor(state, "a", "corner", last.a)),
-      source.corner("b", viewFor(state, "b", "corner", last.b)),
-    ]);
+    // One side at a time: A's answer (or its deadline) lands before B is asked.
+    // Both plans are still in hand before the exchange is resolved, so neither
+    // fighter sees the other's choice. Same seed and same answers stay identical.
+    const cornerA = await source.corner("a", viewFor(state, "a", "corner", last.a));
+    const cornerB = await source.corner("b", viewFor(state, "b", "corner", last.b));
     state.a.tactic = cornerA.tactic;
     state.b.tactic = cornerB.tactic;
     const roundLog: RoundLog = { round: state.round, corner: { a: cornerA, b: cornerB }, exchanges: [], betweenRounds: [] };
     rounds.push(roundLog);
 
     while (!state.result && state.exchange <= EXCHANGES_PER_ROUND) {
-      // Both plans are collected before resolving, so neither side sees the other's choice.
-      const [planA, planB] = await Promise.all([
-        source.exchange("a", viewFor(state, "a", "exchange", last.a)),
-        source.exchange("b", viewFor(state, "b", "exchange", last.b)),
-      ]);
+      const planA = await source.exchange("a", viewFor(state, "a", "exchange", last.a));
+      const planB = await source.exchange("b", viewFor(state, "b", "exchange", last.b));
       const exchange = state.exchange;
       const out = resolveExchange(state, planA, planB, rng);
       state = out.state;
@@ -172,16 +174,45 @@ export function summarize(events: FightEvent[], side: Side): string[] {
   return lines;
 }
 
+function errorText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 async function ask(controller: Controller, view: FightStateView, timeoutMs: number): Promise<{ value: unknown; error?: string }> {
+  const ac = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
+  // Catch rejections here so a controller that fails after the deadline cannot
+  // surface as an unhandled rejection once the fight has moved on.
+  const pending = Promise.resolve().then(() => controller(view, ac.signal));
+  const settled = pending.then(
+    (value) => ({ value, error: undefined as string | undefined }),
+    (err: unknown) => ({ value: undefined, error: errorText(err) }),
+  );
+  const timedOut = new Promise<{ value: undefined; error: string }>((resolve) => {
+    timer = setTimeout(() => {
+      ac.abort();
+      resolve({ value: undefined, error: `no answer within ${timeoutMs}ms` });
+    }, timeoutMs);
+  });
+
   try {
-    const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new Error(`no answer within ${timeoutMs}ms`)), timeoutMs);
-    });
-    const value = await Promise.race([Promise.resolve().then(() => controller(view)), timeout]);
-    return { value };
-  } catch (err) {
-    return { value: undefined, error: err instanceof Error ? err.message : String(err) };
+    const winner = await Promise.race([
+      settled.then((result) => ({ via: "answer" as const, result })),
+      timedOut.then((result) => ({ via: "timeout" as const, result })),
+    ]);
+    if (winner.via === "answer") return winner.result;
+
+    // The request is already aborted. A controller that honors the signal rejects
+    // on the next turn; wait for that so its bookkeeping finishes before the next
+    // call. A controller that ignores the signal is cut off immediately.
+    const late = await Promise.race([
+      settled.then((result) => ({ done: true as const, result })),
+      new Promise<{ done: false }>((resolve) => {
+        setTimeout(() => resolve({ done: false }), 0);
+      }),
+    ]);
+    if (late.done && late.result.error !== undefined) return { value: undefined, error: late.result.error };
+    return winner.result;
   } finally {
     if (timer !== undefined) clearTimeout(timer);
   }

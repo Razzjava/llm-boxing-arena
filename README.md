@@ -68,9 +68,13 @@ There is a test that sends a secret through it and checks the secret never appea
     so the browser can't read them (you'd just see "Failed to fetch"). Tick "Send via local proxy" to get
     readable errors.
   - **OpenCode**: always through the local proxy (its chat endpoints reject browser preflights).
-- Every LLM call has a short timeout (25 s). If a model times out or answers junk, the engine's fallback
-  plan is used for that exchange, so a fight can't stall. Three auth failures (401/403) in a row stop
-  calling that model for the rest of the fight.
+- Model calls run one at a time, for every provider. Boxer A is asked, and the fight waits for the full
+  reply or for that call to time out, before boxer B is asked. The same order is used for the build
+  (the boxer pick), every corner tactic, and every exchange. Judges and commentary do not call a model.
+- Every LLM call has a 120 second timeout (`LLM_CALL_TIMEOUT_MS`). On timeout the in-flight request is
+  aborted, the engine's fallback plan is used for that step, and the fight continues. Junk answers fall
+  back the same way, so a fight can't stall. Three auth failures (401/403) in a row stop calling that
+  model for the rest of the fight.
 
 ## OpenCode: Console vs Go
 
@@ -163,5 +167,5 @@ the winner's raised hand.
 - The Quaternius *Universal Animation Library* (also CC0) was not used: its itch.io download needs an
   interactive flow, so only the 2019 Ultimate pack is shipped.
 - Models are the same base character recoloured, so boxers differ by colour and build, not face.
-- Long LLM fights take a while to simulate (about 71 calls per fighter); the thinking screen shows progress.
+- Long LLM fights take a while to simulate (about 71 calls per fighter, one call at a time); the thinking screen shows progress.
 - The 3D view is built for desktop; it runs on mobile but the HUD is cramped.

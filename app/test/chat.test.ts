@@ -49,4 +49,29 @@ describe("reading replies", () => {
     const fetchImpl = (async () => { throw new TypeError("Failed to fetch"); }) as typeof fetch;
     await expect(callModel({ ...base, model: direct("openai", "gpt-5"), viaProxy: false, fetchImpl })).rejects.toThrow(/couldn't read the reply/);
   });
+  it("aborts the fetch when the timeout fires", async () => {
+    let signal: AbortSignal | undefined;
+    const fetchImpl = ((_url: string, init?: RequestInit) => {
+      signal = init?.signal ?? undefined;
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+      });
+    }) as typeof fetch;
+    await expect(callModel({ ...base, timeoutMs: 20, model: oc("chat-completions"), viaProxy: false, fetchImpl })).rejects.toThrow("OpenCode: timed out");
+    expect(signal?.aborted).toBe(true);
+  });
+  it("aborts the fetch when the caller aborts", async () => {
+    const caller = new AbortController();
+    let signal: AbortSignal | undefined;
+    const fetchImpl = ((_url: string, init?: RequestInit) => {
+      signal = init?.signal ?? undefined;
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+      });
+    }) as typeof fetch;
+    const pending = callModel({ ...base, timeoutMs: 5_000, signal: caller.signal, model: oc("chat-completions"), viaProxy: false, fetchImpl });
+    caller.abort();
+    await expect(pending).rejects.toThrow("OpenCode: timed out");
+    expect(signal?.aborted).toBe(true);
+  });
 });
