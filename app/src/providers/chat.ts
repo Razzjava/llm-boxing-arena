@@ -16,6 +16,8 @@ export interface ChatRequest {
   /** Same-origin "/proxy" under `npm run dev`/`preview`, or e.g. http://localhost:8787/proxy. */
   proxyBase: string;
   timeoutMs: number;
+  /** Aborts the request immediately, in addition to `timeoutMs`. */
+  signal?: AbortSignal;
   maxTokens?: number;
   fetchImpl?: typeof fetch;
 }
@@ -113,6 +115,11 @@ export async function callModel(req: ChatRequest): Promise<string> {
   const { url, init } = buildRequest(req);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), req.timeoutMs);
+  const onCallerAbort = () => controller.abort();
+  if (req.signal) {
+    if (req.signal.aborted) controller.abort();
+    else req.signal.addEventListener("abort", onCallerAbort, { once: true });
+  }
   try {
     const res = await (req.fetchImpl ?? fetch)(url, { ...init, signal: controller.signal });
     if (!res.ok) throw new ProviderError(await readError(res, req.model.provider, req.key), res.status);
@@ -122,5 +129,6 @@ export async function callModel(req: ChatRequest): Promise<string> {
     throw new ProviderError(describeFetchError(err, req.model.provider, req.key));
   } finally {
     clearTimeout(timer);
+    req.signal?.removeEventListener("abort", onCallerAbort);
   }
 }

@@ -7,7 +7,7 @@ import {
 import { callModel } from "../providers/chat";
 import type { Keys, ModelInfo } from "../providers/types";
 import { PROVIDER_LABELS } from "../providers/types";
-import { askForBuild, llmController, type Ask } from "../llm/controller";
+import { LLM_CALL_TIMEOUT_MS, askForBuild, llmController, type Ask } from "../llm/controller";
 import { ProviderError } from "../providers/http";
 
 export type CornerConfig =
@@ -45,10 +45,11 @@ export interface FightSettings {
   keys: Keys;
   proxyBase: string;
   seed: number;
+  /** Per-call deadline. Defaults to {@link LLM_CALL_TIMEOUT_MS}. */
+  callTimeoutMs?: number;
 }
 
-export const EXCHANGE_TIMEOUT_MS = 25_000;
-const ENGINE_TIMEOUT_MS = 30_000;
+export { LLM_CALL_TIMEOUT_MS };
 
 export function cornerMeta(c: CornerConfig): CornerMeta {
   if (c.kind === "demo") return { label: `Demo bot (${c.style})` };
@@ -58,22 +59,28 @@ export function cornerMeta(c: CornerConfig): CornerMeta {
 export class FightSetupError extends Error {}
 
 export async function runArenaFight(settings: FightSettings, onStatus: (s: FightStatus) => void): Promise<SavedFight> {
+  const callTimeoutMs = settings.callTimeoutMs ?? LLM_CALL_TIMEOUT_MS;
   const status: FightStatus = {
     phase: "building", round: 0, exchange: 0,
-    thinking: { a: true, b: true }, talk: { a: "", b: "" }, fallbacks: { a: 0, b: 0 }, lastError: {}, notes: [],
+    thinking: { a: settings.a.kind === "llm", b: false }, talk: { a: "", b: "" }, fallbacks: { a: 0, b: 0 }, lastError: {}, notes: [],
   };
   const emit = () => onStatus({ ...status, thinking: { ...status.thinking }, talk: { ...status.talk }, fallbacks: { ...status.fallbacks }, lastError: { ...status.lastError }, notes: [...status.notes] });
   emit();
 
   const askers = { a: makeAsk(settings, "a"), b: makeAsk(settings, "b") };
-  const [buildA, buildB] = await Promise.all([
-    buildFor(settings.a, askers.a, "red", status, "a"),
-    buildFor(settings.b, askers.b, "blue", status, "b"),
-  ]).catch((err: unknown) => {
+  // Builds are model calls too. Finish A (or its timeout) before asking B.
+  let buildA: BoxerBuild;
+  let buildB: BoxerBuild;
+  try {
+    buildA = await buildFor(settings.a, askers.a, "red", status, "a", callTimeoutMs);
+    status.thinking.b = settings.b.kind === "llm";
+    emit();
+    buildB = await buildFor(settings.b, askers.b, "blue", status, "b", callTimeoutMs);
+  } catch (err) {
     status.phase = "error";
     emit();
     throw err;
-  });
+  }
   status.phase = "fighting";
   status.thinking = { a: false, b: false };
   emit();
@@ -106,10 +113,10 @@ export async function runArenaFight(settings: FightSettings, onStatus: (s: Fight
         return plan;
       };
     }
-    return llmController(askers[side] as Ask, side === "a" ? "red" : "blue", EXCHANGE_TIMEOUT_MS, watch);
+    return llmController(askers[side] as Ask, side === "a" ? "red" : "blue", callTimeoutMs, watch);
   };
 
-  const log = await runFight(buildA, buildB, controllerFor("a"), controllerFor("b"), settings.seed, { timeoutMs: ENGINE_TIMEOUT_MS });
+  const log = await runFight(buildA, buildB, controllerFor("a"), controllerFor("b"), settings.seed, { timeoutMs: callTimeoutMs });
   status.phase = "done";
   emit();
   return { app: "llm-boxing-arena", version: 1, meta: { a: cornerMeta(settings.a), b: cornerMeta(settings.b) }, log };
@@ -120,17 +127,17 @@ function makeAsk(settings: FightSettings, side: "a" | "b"): Ask | null {
   if (cfg.kind !== "llm") return null;
   const sessionId = crypto.randomUUID(); // one stable OpenCode session per fighter per fight
   const key = settings.keys[cfg.model.provider];
-  return (system, user, timeoutMs) =>
-    callModel({ model: cfg.model, key, system, user, sessionId, viaProxy: cfg.viaProxy, proxyBase: settings.proxyBase, timeoutMs });
+  return (system, user, timeoutMs, signal) =>
+    callModel({ model: cfg.model, key, system, user, sessionId, viaProxy: cfg.viaProxy, proxyBase: settings.proxyBase, timeoutMs, signal });
 }
 
-async function buildFor(cfg: CornerConfig, ask: Ask | null, corner: "red" | "blue", status: FightStatus, side: "a" | "b"): Promise<BoxerBuild> {
+async function buildFor(cfg: CornerConfig, ask: Ask | null, corner: "red" | "blue", status: FightStatus, side: "a" | "b", timeoutMs: number): Promise<BoxerBuild> {
   if (cfg.kind === "demo" || !ask) {
     status.thinking[side] = false;
     return DEMO_BUILDS[cfg.kind === "demo" ? cfg.style : "outBoxer"];
   }
   try {
-    const { raw } = await askForBuild(ask, corner);
+    const { raw } = await askForBuild(ask, corner, timeoutMs);
     const fixed = normalizeBuild(raw, corner === "red" ? "Red Corner" : "Blue Corner");
     if (fixed.fixes.length) status.notes.push(`${corner.toUpperCase()} build repaired: ${fixed.fixes.join("; ")}`);
     status.thinking[side] = false;

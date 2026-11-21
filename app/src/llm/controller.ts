@@ -6,15 +6,21 @@ import { extractJson } from "../providers/json";
 import { ProviderError } from "../providers/http";
 import { BUILD_USER, buildSystem, fightSystem, viewMessage } from "./prompts";
 
+/**
+ * How long one model call may run before it is aborted and the fight falls back.
+ * Long enough for a slow OpenCode reply, short enough that a dead call cannot stall the bout.
+ */
+export const LLM_CALL_TIMEOUT_MS = 120_000;
+
 /** Ask the model one thing: (system, user) -> reply text. Wraps callModel with the corner's settings. */
-export type Ask = (system: string, user: string, timeoutMs: number) => Promise<string>;
+export type Ask = (system: string, user: string, timeoutMs: number, signal?: AbortSignal) => Promise<string>;
 
 export interface BuildResult {
   raw: Record<string, unknown> | null;
   text: string;
 }
 
-export async function askForBuild(ask: Ask, corner: "red" | "blue", timeoutMs = 60_000): Promise<BuildResult> {
+export async function askForBuild(ask: Ask, corner: "red" | "blue", timeoutMs = LLM_CALL_TIMEOUT_MS): Promise<BuildResult> {
   const text = await ask(buildSystem(corner), BUILD_USER, timeoutMs);
   return { raw: extractJson(text, ["stats"]), text };
 }
@@ -27,7 +33,7 @@ export interface ControllerEvents {
 export function llmController(ask: Ask, corner: "red" | "blue", timeoutMs: number, events: ControllerEvents = {}): Controller {
   const system = fightSystem(corner);
   let authFailures = 0;
-  return async (view: FightStateView) => {
+  return async (view: FightStateView, signal?: AbortSignal) => {
     events.onThinking?.(view);
     if (authFailures >= 3) {
       const msg = "skipped: provider rejected the key 3 times";
@@ -35,7 +41,7 @@ export function llmController(ask: Ask, corner: "red" | "blue", timeoutMs: numbe
       throw new Error(msg);
     }
     try {
-      const text = await ask(system, viewMessage(view), timeoutMs);
+      const text = await ask(system, viewMessage(view), timeoutMs, signal);
       const plan = extractJson(text, view.phase === "corner" ? ["tactic"] : ["actions"]);
       authFailures = 0;
       events.onAnswer?.(view, plan, plan ? undefined : "no JSON in reply");
