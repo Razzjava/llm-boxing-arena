@@ -14,9 +14,15 @@ const seed = Number.isFinite(Number(seedArg)) && seedArg !== undefined ? Number(
 const red = pick(redArg, "outBoxer");
 const blue = pick(blueArg, "slugger");
 
-const log = await runFight(DEMO_BUILDS[red], DEMO_BUILDS[blue], DEMO_CONTROLLERS[red], DEMO_CONTROLLERS[blue], seed);
-console.log(fightSummary(log));
-if (jsonPath) {
-  writeFileSync(jsonPath, JSON.stringify(log, null, 2));
-  console.log(`\nFull fight log written to ${jsonPath}`);
+const outcome = await runFight(DEMO_BUILDS[red], DEMO_BUILDS[blue], DEMO_CONTROLLERS[red], DEMO_CONTROLLERS[blue], seed);
+if (outcome.status === "aborted") {
+  console.error(`Fight aborted (${outcome.side} at ${outcome.step}): ${outcome.reason}`);
+  process.exitCode = 1;
+} else {
+  const log = outcome.log;
+  console.log(fightSummary(log));
+  if (jsonPath) {
+    writeFileSync(jsonPath, JSON.stringify(log, null, 2));
+    console.log(`\nFull fight log written to ${jsonPath}`);
+  }
 }

@@ -60,7 +60,7 @@ export function ModelPicker({ provider, list, value, onChange, onReload, testId 
               <div key={family} className="group">
                 <div className="group-name">{family}</div>
                 {ms.map((m) => (
-                  <button type="button" key={m.id} className={`opt ${value?.id === m.id ? "on" : ""}`} onClick={() => { onChange(m); setOpen(false); }} data-testid="model-option">
+                  <button type="button" key={m.id} className={`opt ${value?.id === m.id ? "on" : ""}`} onClick={() => { onChange(m); setOpen(false); }} data-testid="model-option" data-model-id={m.id}>
                     <span className="opt-name">{m.name}</span>
                     <span className="opt-meta">
                       {formatContext(m.contextTokens)} {provider === "opencode" ? `· ${formatCost(estimateFightCost(m.inputPrice, m.outputPrice))}` : ""}

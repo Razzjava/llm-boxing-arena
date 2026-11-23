@@ -71,10 +71,12 @@ There is a test that sends a secret through it and checks the secret never appea
 - Model calls run one at a time, for every provider. Boxer A is asked, and the fight waits for the full
   reply or for that call to time out, before boxer B is asked. The same order is used for the build
   (the boxer pick), every corner tactic, and every exchange. Judges and commentary do not call a model.
-- Every LLM call has a 120 second timeout (`LLM_CALL_TIMEOUT_MS`). On timeout the in-flight request is
-  aborted, the engine's fallback plan is used for that step, and the fight continues. Junk answers fall
-  back the same way, so a fight can't stall. Three auth failures (401/403) in a row stop calling that
-  model for the rest of the fight.
+- Every LLM call has a 120 second timeout (`LLM_CALL_TIMEOUT_MS`). If a call fails, times out, or
+  comes back unusable, the in-flight request is aborted and the match stops immediately. No further
+  model calls are made, no fallback move is substituted, and no winner, scorecard or fight log is saved.
+  The setup screen shows which corner failed (provider and model id), at which step (boxer pick, a
+  round's corner tactic, or a round and exchange action), and why. Pick the models again and start a
+  new match. Keys stay in page memory only.
 
 ## OpenCode: Console vs Go
 

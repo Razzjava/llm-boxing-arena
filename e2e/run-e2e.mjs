@@ -83,14 +83,23 @@ try {
   await shot(page, '02-opencode-model-picker.png');
   check('OpenCode Console model list loads in the picker', nModels > 10 && /live|opencode/i.test(srcText ?? ''), { models: nModels, source: srcText });
 
-  // A real fight with a fake key goes through the proxy and surfaces OpenCode's 401 readably
+  // A real fight with a fake key goes through the proxy, aborts, and returns to setup.
+  const modelId = await page.locator('[data-testid=model-option]').first().getAttribute('data-model-id');
   await page.locator('[data-testid=model-option]').first().click();
   await page.click('[data-testid=start-fight]');
   await page.waitForSelector('[data-testid=fight-error]', { timeout: 60000 });
+  await page.waitForSelector('[data-testid=start-fight]');
   const errText = await page.textContent('[data-testid=fight-error]');
+  const backOnSetup = await page.isVisible('[data-testid=start-fight]') && !(await page.isVisible('[data-testid=watch]'));
   await shot(page, '03-fake-key-401-error.png');
-  check('fake key through proxy returns a readable OpenCode 401', /401/.test(errText ?? '') && /opencode/i.test(errText ?? ''), errText);
+  await shot(page, 'model-call-failure.png');
+  check(
+    'fake key aborts the match and names the OpenCode model, the boxer pick, and the 401',
+    /401/.test(errText ?? '') && /opencode/i.test(errText ?? '') && /boxer pick/i.test(errText ?? '') && !!modelId && (errText ?? '').includes(modelId) && backOnSetup,
+    errText,
+  );
   check('error text does not echo the key', !(errText ?? '').includes(FAKE_KEY));
+  check('setup keeps the selected OpenCode corner', (await page.inputValue('[data-testid=source-red]')) === 'opencode');
 
   // Go plan list loads too (picks are cleared on plan change)
   await page.click('[data-testid=plan-go]');

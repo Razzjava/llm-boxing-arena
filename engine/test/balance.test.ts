@@ -16,6 +16,5 @@ describe("balance sanity over 500 seeded demo fights", () => {
     expect(r.methods.TKO).toBeGreaterThan(0);
     expect(r.avgLandedPerRoundPerBoxer).toBeGreaterThanOrEqual(10);
     expect(r.avgLandedPerRoundPerBoxer).toBeLessThanOrEqual(25);
-    expect(r.fallbacks).toBe(0);
   }, 60_000);
 });

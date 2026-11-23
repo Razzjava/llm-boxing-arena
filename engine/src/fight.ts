@@ -1,33 +1,31 @@
-// runFight: the whole bout (see ROUNDS), driven by two controllers (scripted bots now, LLMs later).
-import type { BoxerBuild, FightEvent, FightResult, FightState, Plan, Side, Tactic } from "./types.js";
+// runFight: the whole bout (see ROUNDS), driven by two controllers (scripted bots or model calls).
+// A failed, timed-out or unusable answer aborts the match. No stock move is substituted.
+import type { BoxerBuild, FightEvent, FightResult, FightState, Side } from "./types.js";
 import { createRng, type Rng } from "./rng.js";
-import { normalizeBuild } from "./boxer.js";
+import { acceptBuild } from "./boxer.js";
 import { createFight, other, viewFor, type FightStateView } from "./state.js";
 import { resolveExchange } from "./exchange.js";
 import { endRound } from "./round.js";
-import { sanitizeActions, sanitizeTactic, type CleanPlan } from "./plans.js";
+import { sanitizeActions, sanitizeTactic, type CleanPlan, type CleanTactic } from "./plans.js";
 import { EXCHANGES_PER_ROUND } from "./tuning.js";
 
 /**
  * A controller sees the fight and returns a plan. Async so an LLM call can sit behind it.
- * `signal` aborts when the answer deadline passes. In-flight model calls must stop on it
- * so the next call cannot overlap a timed-out one.
+ * `signal` aborts when the answer deadline passes or the match is stopping.
  */
-export type Controller = (view: FightStateView, signal?: AbortSignal) => Promise<Plan | unknown> | Plan | unknown;
+export type Controller = (view: FightStateView, signal?: AbortSignal) => Promise<unknown> | unknown;
+
+/** A model (or test) that returns a raw boxer build. Demo fights pass a build object instead. */
+export type BuildProvider = (signal?: AbortSignal) => Promise<unknown> | unknown;
 
 export interface LoggedPlan {
   actions: CleanPlan["actions"];
   talk: string;
-  /** True if the controller's answer was unusable and block+move was used. */
-  fallback: boolean;
-  error?: string;
 }
 
 export interface LoggedCorner {
-  tactic: Tactic;
+  tactic: CleanTactic["tactic"];
   talk: string;
-  fallback: boolean;
-  error?: string;
 }
 
 export interface ExchangeLog {
@@ -55,14 +53,35 @@ export interface FightLog {
   finalState: FightState;
 }
 
+/** Per-call deadline when the caller does not pass one. Matches the app's model timeout. */
+export const DEFAULT_CALL_TIMEOUT_MS = 120_000;
+
 export interface RunOptions {
-  /** Max wait for one controller answer before aborting it and falling back. Default 30s. */
+  /** Max wait for one controller answer before the match is aborted. Default {@link DEFAULT_CALL_TIMEOUT_MS}. */
   timeoutMs?: number;
 }
 
+/** The match stopped before a winner. Nothing was scored. */
+export interface FightAbort {
+  status: "aborted";
+  side: Side;
+  /** "boxer pick", "round 4 corner tactic", or "round 4, exchange 2 action". */
+  step: string;
+  reason: string;
+}
+
+export type FightOutcome = { status: "completed"; log: FightLog } | FightAbort;
+
+export function timeoutReason(timeoutMs: number): string {
+  if (timeoutMs >= 1000 && timeoutMs % 1000 === 0) return `timeout after ${timeoutMs / 1000}s`;
+  return `timeout after ${timeoutMs}ms`;
+}
+
+type StepResult<T> = { ok: true; value: T } | { ok: false; reason: string };
+
 type PlanSource = {
-  corner(side: Side, view: FightStateView): Promise<LoggedCorner>;
-  exchange(side: Side, view: FightStateView): Promise<LoggedPlan>;
+  corner(side: Side, view: FightStateView): Promise<StepResult<LoggedCorner>>;
+  exchange(side: Side, view: FightStateView): Promise<StepResult<LoggedPlan>>;
 };
 
 export async function runFight(
@@ -72,24 +91,31 @@ export async function runFight(
   controllerB: Controller,
   seed: number,
   options: RunOptions = {},
-): Promise<FightLog> {
-  const timeoutMs = options.timeoutMs ?? 30_000;
-  const a = normalizeBuild(boxerA, "Boxer A");
-  const b = normalizeBuild(boxerB, "Boxer B");
+): Promise<FightOutcome> {
+  const timeoutMs = options.timeoutMs ?? DEFAULT_CALL_TIMEOUT_MS;
+  const builtA = await obtainBuild(boxerA, timeoutMs);
+  if (!builtA.ok) return abort("a", "boxer pick", builtA.reason);
+  const builtB = await obtainBuild(boxerB, timeoutMs);
+  if (!builtB.ok) return abort("b", "boxer pick", builtB.reason);
+
   const controllers = { a: controllerA, b: controllerB };
   const source: PlanSource = {
     async corner(side, view) {
-      const { value, error } = await ask(controllers[side], view, timeoutMs);
-      const clean = sanitizeTactic(value);
-      return error ? { ...clean, fallback: true, error } : clean;
+      const asked = await callWithDeadline((signal) => controllers[side](view, signal), timeoutMs);
+      if (!asked.ok) return asked;
+      const parsed = sanitizeTactic(asked.value);
+      if (!parsed.ok) return parsed;
+      return { ok: true, value: parsed.plan };
     },
     async exchange(side, view) {
-      const { value, error } = await ask(controllers[side], view, timeoutMs);
-      const clean = sanitizeActions(value);
-      return error ? { ...clean, fallback: true, error } : clean;
+      const asked = await callWithDeadline((signal) => controllers[side](view, signal), timeoutMs);
+      if (!asked.ok) return asked;
+      const parsed = sanitizeActions(asked.value);
+      if (!parsed.ok) return parsed;
+      return { ok: true, value: parsed.plan };
     },
   };
-  return simulate(a.build, b.build, { a: a.fixes, b: b.fixes }, seed, source);
+  return simulate(builtA.value, builtB.value, { a: [], b: [] }, seed, source);
 }
 
 /** Re-run a saved fight from its log. Plans come from the log, so no controllers are called. */
@@ -104,41 +130,75 @@ export async function replayFight(log: FightLog): Promise<FightLog> {
   }
   const source: PlanSource = {
     async corner(side) {
-      return corners[side].shift() ?? { tactic: "box", talk: "", fallback: true, error: "missing from log" };
+      const plan = corners[side].shift();
+      if (!plan) return { ok: false, reason: "fight log is missing a corner tactic" };
+      const parsed = sanitizeTactic(plan);
+      if (!parsed.ok) return parsed;
+      // Keep the logged object so a completed file replays to the same JSON.
+      return { ok: true, value: plan };
     },
     async exchange(side) {
-      return plans[side].shift() ?? { actions: ["block", "move"], talk: "", fallback: true, error: "missing from log" };
+      const plan = plans[side].shift();
+      if (!plan) return { ok: false, reason: "fight log is missing an exchange plan" };
+      const parsed = sanitizeActions(plan);
+      if (!parsed.ok) return parsed;
+      return { ok: true, value: plan };
     },
   };
-  return simulate(log.builds.a, log.builds.b, log.buildFixes, log.seed, source);
+  const outcome = await simulate(log.builds.a, log.builds.b, log.buildFixes, log.seed, source);
+  if (outcome.status === "aborted") {
+    throw new Error(`This fight log cannot be replayed (${outcome.step}: ${outcome.reason}).`);
+  }
+  return outcome.log;
+}
+
+async function obtainBuild(input: unknown, timeoutMs: number): Promise<StepResult<BoxerBuild>> {
+  if (typeof input !== "function") return stepBuild(acceptBuild(input));
+  const asked = await callWithDeadline((signal) => (input as BuildProvider)(signal), timeoutMs);
+  if (!asked.ok) return asked;
+  return stepBuild(acceptBuild(asked.value));
+}
+
+function stepBuild(accepted: ReturnType<typeof acceptBuild>): StepResult<BoxerBuild> {
+  if (!accepted.ok) return accepted;
+  return { ok: true, value: accepted.build };
 }
 
 async function simulate(
   buildA: BoxerBuild, buildB: BoxerBuild, buildFixes: FightLog["buildFixes"], seed: number, source: PlanSource,
-): Promise<FightLog> {
+): Promise<FightOutcome> {
   const rng: Rng = createRng(seed);
   let state = createFight(buildA, buildB);
   const rounds: RoundLog[] = [];
   let last: Record<Side, string[]> = { a: [], b: [] };
 
   while (!state.result) {
-    // One side at a time: A's answer (or its deadline) lands before B is asked.
+    // One side at a time: A's answer (or its failure) lands before B is asked.
     // Both plans are still in hand before the exchange is resolved, so neither
     // fighter sees the other's choice. Same seed and same answers stay identical.
     const cornerA = await source.corner("a", viewFor(state, "a", "corner", last.a));
+    if (!cornerA.ok) return abort("a", `round ${state.round} corner tactic`, cornerA.reason);
     const cornerB = await source.corner("b", viewFor(state, "b", "corner", last.b));
-    state.a.tactic = cornerA.tactic;
-    state.b.tactic = cornerB.tactic;
-    const roundLog: RoundLog = { round: state.round, corner: { a: cornerA, b: cornerB }, exchanges: [], betweenRounds: [] };
+    if (!cornerB.ok) return abort("b", `round ${state.round} corner tactic`, cornerB.reason);
+    state.a.tactic = cornerA.value.tactic;
+    state.b.tactic = cornerB.value.tactic;
+    const roundLog: RoundLog = {
+      round: state.round,
+      corner: { a: cornerA.value, b: cornerB.value },
+      exchanges: [],
+      betweenRounds: [],
+    };
     rounds.push(roundLog);
 
     while (!state.result && state.exchange <= EXCHANGES_PER_ROUND) {
       const planA = await source.exchange("a", viewFor(state, "a", "exchange", last.a));
+      if (!planA.ok) return abort("a", `round ${state.round}, exchange ${state.exchange} action`, planA.reason);
       const planB = await source.exchange("b", viewFor(state, "b", "exchange", last.b));
+      if (!planB.ok) return abort("b", `round ${state.round}, exchange ${state.exchange} action`, planB.reason);
       const exchange = state.exchange;
-      const out = resolveExchange(state, planA, planB, rng);
+      const out = resolveExchange(state, planA.value, planB.value, rng);
       state = out.state;
-      roundLog.exchanges.push({ exchange, plans: { a: planA, b: planB }, events: out.events, duration: out.duration });
+      roundLog.exchanges.push({ exchange, plans: { a: planA.value, b: planB.value }, events: out.events, duration: out.duration });
       last = { a: summarize(out.events, "a"), b: summarize(out.events, "b") };
     }
 
@@ -151,7 +211,14 @@ async function simulate(
 
   const result: FightResult = { ...(state.result as FightResult), scorecards: state.scorecards };
   state.result = result;
-  return { version: 1, seed, builds: { a: buildA, b: buildB }, buildFixes, rounds, result, finalState: state };
+  return {
+    status: "completed",
+    log: { version: 1, seed, builds: { a: buildA, b: buildB }, buildFixes, rounds, result, finalState: state },
+  };
+}
+
+function abort(side: Side, step: string, reason: string): FightAbort {
+  return { status: "aborted", side, step, reason };
 }
 
 /** Short plain-English recap of the last exchange from one side's point of view. */
@@ -175,23 +242,34 @@ export function summarize(events: FightEvent[], side: Side): string[] {
 }
 
 function errorText(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.replace(/\s+/g, " ").trim().slice(0, 240);
 }
 
-async function ask(controller: Controller, view: FightStateView, timeoutMs: number): Promise<{ value: unknown; error?: string }> {
+function isTimeoutMessage(msg: string): boolean {
+  return /timed out|\babort/i.test(msg);
+}
+
+async function callWithDeadline(
+  run: (signal: AbortSignal) => Promise<unknown> | unknown,
+  timeoutMs: number,
+): Promise<StepResult<unknown>> {
   const ac = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
   // Catch rejections here so a controller that fails after the deadline cannot
-  // surface as an unhandled rejection once the fight has moved on.
-  const pending = Promise.resolve().then(() => controller(view, ac.signal));
+  // surface as an unhandled rejection once the match has stopped.
+  const pending = Promise.resolve().then(() => run(ac.signal));
   const settled = pending.then(
-    (value) => ({ value, error: undefined as string | undefined }),
-    (err: unknown) => ({ value: undefined, error: errorText(err) }),
+    (value) => ({ ok: true as const, value }),
+    (err: unknown) => {
+      const message = errorText(err);
+      return { ok: false as const, reason: isTimeoutMessage(message) ? timeoutReason(timeoutMs) : message || "request failed" };
+    },
   );
-  const timedOut = new Promise<{ value: undefined; error: string }>((resolve) => {
+  const timedOut = new Promise<{ ok: false; reason: string }>((resolve) => {
     timer = setTimeout(() => {
       ac.abort();
-      resolve({ value: undefined, error: `no answer within ${timeoutMs}ms` });
+      resolve({ ok: false, reason: timeoutReason(timeoutMs) });
     }, timeoutMs);
   });
 
@@ -202,16 +280,12 @@ async function ask(controller: Controller, view: FightStateView, timeoutMs: numb
     ]);
     if (winner.via === "answer") return winner.result;
 
-    // The request is already aborted. A controller that honors the signal rejects
-    // on the next turn; wait for that so its bookkeeping finishes before the next
-    // call. A controller that ignores the signal is cut off immediately.
-    const late = await Promise.race([
-      settled.then((result) => ({ done: true as const, result })),
-      new Promise<{ done: false }>((resolve) => {
-        setTimeout(() => resolve({ done: false }), 0);
-      }),
+    // The request is already aborted. Wait one turn so a controller that honors
+    // the signal can reject before we return. A controller that ignores it is cut off.
+    await Promise.race([
+      settled.then(() => undefined),
+      new Promise<void>((resolve) => setTimeout(resolve, 0)),
     ]);
-    if (late.done && late.result.error !== undefined) return { value: undefined, error: late.result.error };
     return winner.result;
   } finally {
     if (timer !== undefined) clearTimeout(timer);

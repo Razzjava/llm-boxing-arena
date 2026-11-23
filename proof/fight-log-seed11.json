@@ -52,13 +52,11 @@
     "corner": {
      "a": {
       "tactic": "box",
-      "talk": "Load up. One shot changes it.",
-      "fallback": false
+      "talk": "Load up. One shot changes it."
      },
      "b": {
       "tactic": "pressure",
-      "talk": "Walk him down. Body, body, head.",
-      "fallback": false
+      "talk": "Walk him down. Body, body, head."
      }
     },
     "exchanges": [
@@ -71,8 +69,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -80,8 +77,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -330,8 +326,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -339,8 +334,7 @@
          "body",
          "uppercut"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -556,8 +550,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -565,8 +558,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -821,8 +813,7 @@
          "uppercut",
          "block"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -830,8 +821,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -1049,8 +1039,7 @@
          "hook",
          "uppercut"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -1058,8 +1047,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -1263,8 +1251,7 @@
          "uppercut",
          "block"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -1272,8 +1259,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -1465,13 +1451,11 @@
     "corner": {
      "a": {
       "tactic": "box",
-      "talk": "Load up. One shot changes it.",
-      "fallback": false
+      "talk": "Load up. One shot changes it."
      },
      "b": {
       "tactic": "pressure",
-      "talk": "Walk him down. Body, body, head.",
-      "fallback": false
+      "talk": "Walk him down. Body, body, head."
      }
     },
     "exchanges": [
@@ -1484,8 +1468,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -1493,8 +1476,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -1777,8 +1759,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -1786,8 +1767,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -2051,8 +2031,7 @@
          "uppercut",
          "block"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -2060,8 +2039,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -2226,8 +2204,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -2235,8 +2212,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -2480,8 +2456,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -2489,8 +2464,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -2754,8 +2728,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -2763,8 +2736,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -3089,13 +3061,11 @@
     "corner": {
      "a": {
       "tactic": "box",
-      "talk": "Load up. One shot changes it.",
-      "fallback": false
+      "talk": "Load up. One shot changes it."
      },
      "b": {
       "tactic": "pressure",
-      "talk": "Walk him down. Body, body, head.",
-      "fallback": false
+      "talk": "Walk him down. Body, body, head."
      }
     },
     "exchanges": [
@@ -3108,8 +3078,7 @@
          "hook",
          "cross"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -3117,8 +3086,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -3410,8 +3378,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -3419,8 +3386,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -3706,8 +3672,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -3715,8 +3680,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -3949,8 +3913,7 @@
          "hook",
          "cross"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -3958,8 +3921,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -4248,8 +4210,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -4257,8 +4218,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -4491,8 +4451,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -4500,8 +4459,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -4772,13 +4730,11 @@
     "corner": {
      "a": {
       "tactic": "survive",
-      "talk": "Hands up, wait for the big one.",
-      "fallback": false
+      "talk": "Hands up, wait for the big one."
      },
      "b": {
       "tactic": "pressure",
-      "talk": "Walk him down. Body, body, head.",
-      "fallback": false
+      "talk": "Walk him down. Body, body, head."
      }
     },
     "exchanges": [
@@ -4791,8 +4747,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -4800,8 +4755,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -5093,8 +5047,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -5102,8 +5055,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -5324,8 +5276,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -5333,8 +5284,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -5602,8 +5552,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -5611,8 +5560,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -5867,8 +5815,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -5876,8 +5823,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -6079,8 +6025,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -6088,8 +6033,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -6354,13 +6298,11 @@
     "corner": {
      "a": {
       "tactic": "survive",
-      "talk": "Hands up, wait for the big one.",
-      "fallback": false
+      "talk": "Hands up, wait for the big one."
      },
      "b": {
       "tactic": "pressure",
-      "talk": "Walk him down. Body, body, head.",
-      "fallback": false
+      "talk": "Walk him down. Body, body, head."
      }
     },
     "exchanges": [
@@ -6373,8 +6315,7 @@
          "uppercut",
          "block"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -6382,8 +6323,7 @@
          "body",
          "uppercut"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -6568,8 +6508,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -6577,8 +6516,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -6805,8 +6743,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -6814,8 +6751,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -7033,8 +6969,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -7042,8 +6977,7 @@
          "body",
          "uppercut"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -7250,8 +7184,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -7259,8 +7192,7 @@
          "body",
          "move"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -7422,8 +7354,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -7431,8 +7362,7 @@
          "body",
          "move"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -7621,13 +7551,11 @@
     "corner": {
      "a": {
       "tactic": "pressure",
-      "talk": "He can't take another one. Go get him.",
-      "fallback": false
+      "talk": "He can't take another one. Go get him."
      },
      "b": {
       "tactic": "pressure",
-      "talk": "Walk him down. Body, body, head.",
-      "fallback": false
+      "talk": "Walk him down. Body, body, head."
      }
     },
     "exchanges": [
@@ -7640,8 +7568,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -7649,8 +7576,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -7922,8 +7848,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -7931,8 +7856,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -8164,8 +8088,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -8173,8 +8096,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -8398,8 +8320,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -8407,8 +8328,7 @@
          "body",
          "move"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -8573,8 +8493,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -8582,8 +8501,7 @@
          "body",
          "move"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -8745,8 +8663,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -8754,8 +8671,7 @@
          "body",
          "move"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -8950,13 +8866,11 @@
     "corner": {
      "a": {
       "tactic": "pressure",
-      "talk": "He can't take another one. Go get him.",
-      "fallback": false
+      "talk": "He can't take another one. Go get him."
      },
      "b": {
       "tactic": "pressure",
-      "talk": "Walk him down. Body, body, head.",
-      "fallback": false
+      "talk": "Walk him down. Body, body, head."
      }
     },
     "exchanges": [
@@ -8969,8 +8883,7 @@
          "uppercut",
          "block"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -8978,8 +8891,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -9178,8 +9090,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -9187,8 +9098,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -9456,8 +9366,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -9465,8 +9374,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -9713,8 +9621,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -9722,8 +9629,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -9919,8 +9825,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -9928,8 +9833,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -10165,8 +10069,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -10174,8 +10077,7 @@
          "body",
          "move"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -10371,13 +10273,11 @@
     "corner": {
      "a": {
       "tactic": "pressure",
-      "talk": "He can't take another one. Go get him.",
-      "fallback": false
+      "talk": "He can't take another one. Go get him."
      },
      "b": {
       "tactic": "pressure",
-      "talk": "Walk him down. Body, body, head.",
-      "fallback": false
+      "talk": "Walk him down. Body, body, head."
      }
     },
     "exchanges": [
@@ -10390,8 +10290,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -10399,8 +10298,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -10739,8 +10637,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -10748,8 +10645,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -11067,16 +10963,14 @@
          "uppercut",
          "cross"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
          "clinch",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -11255,8 +11149,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -11264,8 +11157,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -11464,8 +11356,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -11473,8 +11364,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -11715,8 +11605,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -11724,8 +11613,7 @@
          "body",
          "move"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -11918,13 +11806,11 @@
     "corner": {
      "a": {
       "tactic": "pressure",
-      "talk": "He can't take another one. Go get him.",
-      "fallback": false
+      "talk": "He can't take another one. Go get him."
      },
      "b": {
       "tactic": "pressure",
-      "talk": "Walk him down. Body, body, head.",
-      "fallback": false
+      "talk": "Walk him down. Body, body, head."
      }
     },
     "exchanges": [
@@ -11937,8 +11823,7 @@
          "hook",
          "uppercut"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -11946,8 +11831,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -12171,8 +12055,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -12180,8 +12063,7 @@
          "body",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -12448,8 +12330,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -12457,8 +12338,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -12685,8 +12565,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -12694,8 +12573,7 @@
          "body",
          "uppercut"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -12925,8 +12803,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -12934,8 +12811,7 @@
          "body",
          "move"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -13100,8 +12976,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -13109,8 +12984,7 @@
          "body",
          "move"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -13309,13 +13183,11 @@
     "corner": {
      "a": {
       "tactic": "pressure",
-      "talk": "He can't take another one. Go get him.",
-      "fallback": false
+      "talk": "He can't take another one. Go get him."
      },
      "b": {
       "tactic": "pressure",
-      "talk": "Walk him down. Body, body, head.",
-      "fallback": false
+      "talk": "Walk him down. Body, body, head."
      }
     },
     "exchanges": [
@@ -13328,8 +13200,7 @@
          "hook",
          "uppercut"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -13337,8 +13208,7 @@
          "hook",
          "body"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [
@@ -13528,8 +13398,7 @@
          "cross",
          "hook"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        },
        "b": {
         "actions": [
@@ -13537,8 +13406,7 @@
          "body",
          "uppercut"
         ],
-        "talk": "",
-        "fallback": false
+        "talk": ""
        }
       },
       "events": [

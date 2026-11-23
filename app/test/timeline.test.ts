@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { DEMO_BUILDS, DEMO_CONTROLLERS, replayFight, runFight } from "@llm-boxing-arena/engine";
+import { DEMO_BUILDS, DEMO_CONTROLLERS, replayFight, runFight, type FightLog } from "@llm-boxing-arena/engine";
 import { buildTimeline, clockAt, segmentAt, vitalsAt } from "../src/playback/timeline";
 import { buildCommentary, linesAt } from "../src/playback/commentary";
 
+async function demoLog(seed: number, red: "slugger" | "outBoxer" = "slugger", blue: "swarmer" | "slugger" = "swarmer"): Promise<FightLog> {
+  const outcome = await runFight(DEMO_BUILDS[red], DEMO_BUILDS[blue], DEMO_CONTROLLERS[red], DEMO_CONTROLLERS[blue], seed);
+  if (outcome.status !== "completed") throw new Error(outcome.reason);
+  return outcome.log;
+}
+
 describe("playback timeline", () => {
   it("steps the engine to exactly the logged final state, and replay is identical", async () => {
-    const log = await runFight(DEMO_BUILDS.slugger, DEMO_BUILDS.swarmer, DEMO_CONTROLLERS.slugger, DEMO_CONTROLLERS.swarmer, 11);
+    const log = await demoLog(11);
     const tl = buildTimeline(log);
     expect(tl.finalState).toEqual(log.finalState);
     expect(JSON.stringify(await replayFight(JSON.parse(JSON.stringify(log))))).toBe(JSON.stringify(log));
@@ -16,7 +22,7 @@ describe("playback timeline", () => {
     for (let i = 1; i < tl.segments.length; i++) expect(tl.segments[i]!.start).toBeCloseTo(tl.segments[i - 1]!.start + tl.segments[i - 1]!.duration);
   });
   it("answers time queries", async () => {
-    const log = await runFight(DEMO_BUILDS.outBoxer, DEMO_BUILDS.slugger, DEMO_CONTROLLERS.outBoxer, DEMO_CONTROLLERS.slugger, 7);
+    const log = await demoLog(7, "outBoxer", "slugger");
     const tl = buildTimeline(log);
     const firstEx = tl.segments[1]!;
     expect(segmentAt(tl, firstEx.start + 1).index).toBe(1);

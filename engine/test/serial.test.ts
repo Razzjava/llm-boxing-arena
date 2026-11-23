@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEMO_BUILDS } from "../src/controllers.js";
-import { runFight, type Controller } from "../src/fight.js";
+import { DEFAULT_CALL_TIMEOUT_MS, runFight, type Controller, type FightOutcome } from "../src/fight.js";
 import type { FightStateView } from "../src/state.js";
 
 const A = DEMO_BUILDS.slugger;
@@ -17,7 +17,17 @@ function planFor(view: FightStateView, side: "a" | "b") {
   return { actions: ["jab", "move"], talk: side };
 }
 
+function completed(outcome: FightOutcome) {
+  expect(outcome.status).toBe("completed");
+  if (outcome.status !== "completed") throw new Error("aborted");
+  return outcome.log;
+}
+
 describe("controllers are asked one at a time", () => {
+  it("uses a 120s default deadline", () => {
+    expect(DEFAULT_CALL_TIMEOUT_MS).toBe(120_000);
+  });
+
   it("call B never starts before call A resolves, for corners and exchanges", async () => {
     const marks: Mark[] = [];
     const controller = (side: "a" | "b"): Controller => async (view) => {
@@ -27,9 +37,10 @@ describe("controllers are asked one at a time", () => {
       return planFor(view, side);
     };
 
-    const log = await runFight(A, B, controller("a"), controller("b"), 11);
+    const log = completed(await runFight(A, B, controller("a"), controller("b"), 11));
 
-    expect(log.result).toBeTruthy();
+    expect(log.result.winner === "a" || log.result.winner === "b" || log.result.winner === null).toBe(true);
+    expect(log.result.method).toBeTruthy();
     expect(marks.length).toBeGreaterThan(8);
     expect(marks.some((m) => m.phase === "corner")).toBe(true);
     expect(marks.some((m) => m.phase === "exchange")).toBe(true);
@@ -43,13 +54,13 @@ describe("controllers are asked one at a time", () => {
       expect(bStart).toMatchObject({ side: "b", event: "start", phase: aStart?.phase });
       expect(bEnd).toMatchObject({ side: "b", event: "end", phase: aStart?.phase });
     }
-    expect(log.rounds[0]?.corner.a.fallback).toBe(false);
-    expect(log.rounds[0]?.corner.a.tactic).toBe("pressure");
-    expect(log.rounds[0]?.exchanges[0]?.plans.b.fallback).toBe(false);
-    expect(log.rounds[0]?.exchanges[0]?.plans.b.actions).toEqual(["jab", "move"]);
+    expect(log.rounds[0]?.corner.a).toEqual({ tactic: "pressure", talk: "a" });
+    expect(log.rounds[0]?.corner.a).not.toHaveProperty("fallback");
+    expect(log.rounds[0]?.exchanges[0]?.plans.b).toEqual({ actions: ["jab", "move"], talk: "b" });
+    expect(log.rounds[0]?.exchanges[0]?.plans.b).not.toHaveProperty("fallback");
   });
 
-  it("a timed-out call is aborted and falls back before the next call starts", async () => {
+  it("a timed-out call is aborted and no later call starts", async () => {
     const marks: Mark[] = [];
     const a: Controller = (view, signal) => {
       marks.push({ side: "a", phase: view.phase, event: "start" });
@@ -76,24 +87,18 @@ describe("controllers are asked one at a time", () => {
       return planFor(view, "b");
     };
 
-    const log = await runFight(A, B, a, b, 12, { timeoutMs: 15 });
+    const outcome = await runFight(A, B, a, b, 12, { timeoutMs: 15 });
 
-    expect(log.result).toBeTruthy();
-    expect(marks.length).toBeGreaterThan(0);
-    for (let i = 0; i < marks.length; i += 4) {
-      const aStart = marks[i];
-      expect(aStart).toMatchObject({ side: "a", event: "start" });
-      expect(marks[i + 1]).toMatchObject({ side: "a", event: "abort", phase: aStart?.phase });
-      expect(marks[i + 2]).toMatchObject({ side: "b", event: "start", phase: aStart?.phase });
-      expect(marks[i + 3]).toMatchObject({ side: "b", event: "end", phase: aStart?.phase });
-    }
-    expect(log.rounds[0]?.corner.a).toMatchObject({ tactic: "box", fallback: true });
-    expect(log.rounds[0]?.corner.a.error).toMatch(/aborted|no answer within 15ms/);
-    expect(log.rounds[0]?.corner.b).toMatchObject({ tactic: "survive", fallback: false });
-    const firstExchange = log.rounds[0]?.exchanges[0];
-    expect(firstExchange?.plans.a).toMatchObject({ actions: ["block", "move"], fallback: true });
-    expect(firstExchange?.plans.b.fallback).toBe(false);
-    expect(log.rounds.every((r) => r.corner.a.fallback && r.exchanges.every((x) => x.plans.a.fallback))).toBe(true);
-    expect(log.rounds.every((r) => !r.corner.b.fallback && r.exchanges.every((x) => !x.plans.b.fallback))).toBe(true);
+    expect(outcome).toMatchObject({
+      status: "aborted",
+      side: "a",
+      step: "round 1 corner tactic",
+      reason: "timeout after 15ms",
+    });
+    expect(outcome).not.toHaveProperty("log");
+    expect(marks).toEqual([
+      { side: "a", phase: "corner", event: "start" },
+      { side: "a", phase: "corner", event: "abort" },
+    ]);
   });
 });

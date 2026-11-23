@@ -1,51 +1,44 @@
 import { describe, expect, it } from "vitest";
-import { checkBuild, normalizeBuild, DEFAULT_BUILD } from "../src/boxer.js";
+import { acceptBuild, checkBuild } from "../src/boxer.js";
 import { OUT } from "./helpers.js";
-
-const total = (s: Record<string, number>) => Object.values(s).reduce((a, b) => a + b, 0);
 
 describe("boxer builds", () => {
   it("accepts a legal 30-point build unchanged", () => {
     expect(checkBuild(OUT)).toEqual([]);
-    const n = normalizeBuild(OUT);
-    expect(n.build).toEqual(OUT);
-    expect(n.fixes).toEqual([]);
+    const n = acceptBuild(OUT);
+    expect(n.ok).toBe(true);
+    if (n.ok) expect(n.build).toEqual(OUT);
   });
 
-  it("rejects an all-10s build and repairs it to exactly 30 points within 1-10", () => {
+  it("rejects an illegal build instead of repairing or substituting a default fighter", () => {
     const greedy = { ...OUT, stats: { power: 10, speed: 10, accuracy: 10, defence: 10, chin: 10, stamina: 10 } };
     expect(checkBuild(greedy).join()).toMatch(/total 30/);
-    const { build, fixes } = normalizeBuild(greedy);
-    expect(total(build.stats as never)).toBe(30);
-    expect(fixes.join()).toMatch(/rescaled/);
-  });
+    const scaled = acceptBuild(greedy);
+    expect(scaled.ok).toBe(false);
+    if (!scaled.ok) expect(scaled.reason).toMatch(/unusable response/);
 
-  it("clamps out-of-range, fractional and missing stats", () => {
-    const messy = { name: "X", stance: "southpaw", style: "slugger", stats: { power: 99, speed: -4, accuracy: 3.6, defence: "7", chin: null } };
-    const { build } = normalizeBuild(messy);
-    for (const v of Object.values(build.stats)) {
-      expect(Number.isInteger(v)).toBe(true);
-      expect(v).toBeGreaterThanOrEqual(1);
-      expect(v).toBeLessThanOrEqual(10);
-    }
-    expect(total(build.stats as never)).toBe(30);
-    expect(checkBuild(build)).toEqual([]);
-  });
+    const messy = { name: "X", stance: "southpaw", style: "slugger", stats: { power: 99, speed: -4, accuracy: 3.6, defence: "7", chin: null, stamina: 5 } };
+    expect(checkBuild(messy).length).toBeGreaterThan(0);
+    expect(acceptBuild(messy).ok).toBe(false);
 
-  it("falls back to the default fighter for garbage", () => {
     for (const junk of [null, "punch hard", 42, [], { name: "no stats" }]) {
-      const n = normalizeBuild(junk, "Boxer A");
-      expect(n.usedDefault).toBe(true);
-      expect(n.build.stats).toEqual(DEFAULT_BUILD.stats);
-      expect(n.build.name).toBe("Boxer A");
+      const n = acceptBuild(junk);
+      expect(n.ok).toBe(false);
+      if (!n.ok) expect(n.reason).toMatch(/^unusable response:/);
     }
   });
 
-  it("cleans names and defaults bad stance/style", () => {
-    const { build } = normalizeBuild({ ...OUT, name: "  <script>alert(1)</script> Very Long Name Indeed Yes ", stance: "both", style: "Counter Puncher" });
-    expect(build.name).not.toMatch(/[<>]/);
-    expect(build.name.length).toBeLessThanOrEqual(24);
-    expect(build.stance).toBe("orthodox");
-    expect(build.style).toBe("counter-puncher");
+  it("cleans display text on a legal build and keeps the stats", () => {
+    const raw = { ...OUT, name: "  Bob <b>  ", nickname: "The Kid\n" };
+    expect(checkBuild(raw)).toEqual([]);
+    const n = acceptBuild(raw);
+    expect(n.ok).toBe(true);
+    if (n.ok) {
+      expect(n.build.name).toBe("Bob b");
+      expect(n.build.nickname).toBe("The Kid");
+      expect(n.build.stats).toEqual(OUT.stats);
+      expect(n.build.stance).toBe(OUT.stance);
+      expect(n.build.style).toBe(OUT.style);
+    }
   });
 });
