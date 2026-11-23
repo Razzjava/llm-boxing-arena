@@ -3,10 +3,9 @@ import { createFight } from "../src/state.js";
 import { resolveExchange } from "../src/exchange.js";
 import { endRound } from "../src/round.js";
 import { createRng } from "../src/rng.js";
-import { runFight } from "../src/fight.js";
 import type { FightState } from "../src/types.js";
 import { ROUNDS } from "../src/tuning.js";
-import { bots, OUT, SLUG, SWARM, demoFight } from "./helpers.js";
+import { bots, OUT, SLUG, SWARM, demoFight, fought } from "./helpers.js";
 
 const bombs = { actions: ["hook", "uppercut", "cross"] };
 const stand = { actions: ["jab", "jab", "jab"] };
@@ -79,7 +78,7 @@ describe("every ending is reachable", () => {
   it("referee stoppages, KOs and decisions all turn up in real demo fights", async () => {
     const seen = new Set<string>();
     for (let seed = 1; seed <= 150; seed++) {
-      const log = seed % 2 ? await demoFight(seed) : await runFight(SWARM, SLUG, bots.swarmer, bots.slugger, seed);
+      const log = seed % 2 ? await demoFight(seed) : await fought(SWARM, SLUG, bots.swarmer, bots.slugger, seed);
       seen.add(log.result.method);
       if (log.result.reason.includes("referee")) seen.add("referee");
     }
@@ -89,7 +88,7 @@ describe("every ending is reachable", () => {
 
   it("a fight that goes the distance lasts 10 rounds and the cards total at most 100", async () => {
     for (let seed = 1; seed < 200; seed++) {
-      const log = await runFight(OUT, SWARM, bots.outBoxer, bots.swarmer, seed);
+      const log = await fought(OUT, SWARM, bots.outBoxer, bots.swarmer, seed);
       if (["UD", "SD", "MD", "draw"].includes(log.result.method)) {
         expect(log.rounds).toHaveLength(ROUNDS);
         expect(log.result.round).toBe(ROUNDS);

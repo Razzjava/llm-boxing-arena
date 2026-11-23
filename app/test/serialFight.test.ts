@@ -117,7 +117,10 @@ describe("fight model calls stay serial", () => {
 
   it("call B never starts before call A resolves, across picks and exchanges", async () => {
     const { events, spans } = installFetch({ delayMs: 5 });
-    const saved = await runArenaFight(settings(), () => {});
+    const outcome = await runArenaFight(settings(), () => {});
+    expect(outcome.status).toBe("completed");
+    if (outcome.status !== "completed") return;
+    const saved = outcome.fight;
 
     expect(saved.log.result).toBeTruthy();
     expectStrictOrder(events);
@@ -130,27 +133,27 @@ describe("fight model calls stay serial", () => {
       expect(fightCalls[i]).toMatchObject({ side: "a", aborted: false });
       expect(fightCalls[i + 1]).toMatchObject({ side: "b", aborted: false, kind: fightCalls[i]?.kind });
     }
-    expect(saved.log.rounds[0]?.corner.a).toMatchObject({ tactic: "pressure", fallback: false });
+    expect(saved.log.rounds[0]?.corner.a).toEqual({ tactic: "pressure", talk: "a" });
+    expect(saved.log.rounds[0]?.corner.a).not.toHaveProperty("fallback");
     expect(saved.log.rounds[0]?.exchanges[0]?.plans.b.actions).toEqual(["jab", "slip"]);
   }, 20_000);
 
-  it("a timed-out call falls back and the next call still runs after it", async () => {
+  it("a timed-out call aborts the match and no further call starts", async () => {
     const { events, spans } = installFetch({ delayMs: 5, hangIndex: 2 });
-    const saved = await runArenaFight(settings(40), () => {});
+    const statuses: string[] = [];
+    const outcome = await runArenaFight(settings(40), (s) => statuses.push(s.phase));
 
-    expect(saved.log.result).toBeTruthy();
+    expect(outcome.status).toBe("aborted");
+    if (outcome.status !== "aborted") return;
+    expect(outcome.message).toBe("Red corner (OpenCode, red-model) failed at round 1 corner tactic: timeout after 40ms");
+    expect(outcome.message).not.toContain("test-key");
+    expect(outcome.message).not.toMatch(/authorization|bearer/i);
+    expect(outcome).not.toHaveProperty("fight");
     expectStrictOrder(events);
+    expect(spans).toHaveLength(3);
     expect(spans[2]).toMatchObject({ kind: "corner", side: "a", aborted: true });
-    expect(spans[3]).toMatchObject({ kind: "corner", side: "b", aborted: false });
-    const timedOut = events.findIndex((e) => e.i === 2 && e.mark === "end");
-    const nextStart = events.findIndex((e) => e.i === 3 && e.mark === "start");
-    expect(timedOut).toBeGreaterThan(-1);
-    expect(nextStart).toBeGreaterThan(timedOut);
-    expect(saved.log.rounds[0]?.corner.a).toMatchObject({ tactic: "box", fallback: true });
-    expect(saved.log.rounds[0]?.corner.a.error).toMatch(/timed out|no answer within 40ms/);
-    expect(saved.log.rounds[0]?.corner.b).toMatchObject({ tactic: "pressure", fallback: false });
-    expect(saved.log.rounds[0]?.exchanges[0]?.plans.a.fallback).toBe(false);
-    expect(saved.log.rounds[0]?.exchanges[0]?.plans.b.fallback).toBe(false);
-    expect(spans.slice(3).every((s) => !s.aborted)).toBe(true);
+    expect(events.some((e) => e.i === 3)).toBe(false);
+    expect(statuses.at(-1)).toBe("error");
+    expect(spans.slice(0, 2).every((s) => !s.aborted)).toBe(true);
   }, 20_000);
 });

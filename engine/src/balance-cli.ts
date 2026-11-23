@@ -14,4 +14,4 @@ console.log(`Max matchup win rate: ${(100 * maxWin).toFixed(1)}%`);
 console.log(`Stoppage rate: ${(100 * r.stoppageRate).toFixed(1)}%`);
 console.log(`Early stoppages (rounds 1-3): ${r.earlyStoppages} of ${r.fights} (${(100 * r.earlyStoppages / r.fights).toFixed(1)}%)`);
 console.log(`Avg landed/round/boxer: ${r.avgLandedPerRoundPerBoxer.toFixed(1)}  thrown: ${r.avgThrownPerRoundPerBoxer.toFixed(1)}`);
-console.log(`Avg rounds: ${r.avgRounds.toFixed(2)}  knockdowns/fight: ${r.knockdownsPerFight.toFixed(2)}  fallback plans: ${r.fallbacks}`);
+console.log(`Avg rounds: ${r.avgRounds.toFixed(2)}  knockdowns/fight: ${r.knockdownsPerFight.toFixed(2)}`);

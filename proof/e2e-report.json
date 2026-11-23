@@ -1,5 +1,5 @@
 {
-  "started": "2026-11-20T14:00:59.600Z",
+  "started": "2026-11-23T09:13:01.636Z",
   "checks": {
     "setup screen renders": {
       "ok": true
@@ -15,18 +15,21 @@
         "source": "83 models loaded live"
       }
     },
-    "fake key through proxy returns a readable OpenCode 401": {
+    "fake key aborts the match and names the OpenCode model, the boxer pick, and the 401": {
       "ok": true,
-      "detail": "RED corner (beam-free): OpenCode 401: Invalid credential"
+      "detail": "Red corner (OpenCode, beam-free) failed at boxer pick: OpenCode 401: Invalid credential"
     },
     "error text does not echo the key": {
+      "ok": true
+    },
+    "setup keeps the selected OpenCode corner": {
       "ok": true
     },
     "OpenCode Go model list loads in the picker": {
       "ok": true,
       "detail": {
-        "models": 31,
-        "source": "31 models loaded live"
+        "models": 30,
+        "source": "30 models loaded live"
       }
     },
     "reload clears keys": {
@@ -41,7 +44,7 @@
     },
     "round 1 renders with HUD": {
       "ok": true,
-      "detail": "ROUND 10:26"
+      "detail": "ROUND 10:25"
     },
     "fight has a knockdown": {
       "ok": true,
@@ -65,7 +68,7 @@
       "ok": true,
       "detail": {
         "file": "fight-log-seed11.json",
-        "bytes": 273192
+        "bytes": 269668
       }
     },
     "low-quality toggle": {
@@ -80,7 +83,7 @@
       "detail": {
         "file": "fight-demo.webm",
         "approxSeconds": 23,
-        "bytes": 10016724
+        "bytes": 7752317
       }
     },
     "proxy server log never contains the key": {
@@ -110,7 +113,7 @@
     ],
     "res": 1802.15
   },
-  "resultWaitMs": 4729,
-  "finished": "2026-11-20T14:02:07.147Z",
+  "resultWaitMs": 9212,
+  "finished": "2026-11-23T09:15:09.870Z",
   "allPassed": true
 }

@@ -86,8 +86,14 @@ export function App() {
     setInfo(null);
     setPhase("simulating");
     try {
-      const saved = await runArenaFight({ a: configs.a, b: configs.b, keys, proxyBase, seed }, setStatus);
-      setFight(saved);
+      const outcome = await runArenaFight({ a: configs.a, b: configs.b, keys, proxyBase, seed }, setStatus);
+      if (outcome.status === "aborted") {
+        setError(outcome.message);
+        setFight(null);
+        setPhase("setup");
+        return;
+      }
+      setFight(outcome.fight);
       setPhase("watching");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

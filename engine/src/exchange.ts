@@ -33,6 +33,12 @@ function windowsFor(actions: Action[]): Window[] {
   return actions.map((action, i) => ({ action, start: i * len, end: (i + 1) * len }));
 }
 
+function actionsFrom(raw: unknown): Action[] {
+  const parsed = sanitizeActions(raw);
+  if (!parsed.ok) throw new Error(`resolveExchange requires a legal plan (${parsed.reason})`);
+  return parsed.plan.actions;
+}
+
 function actionAt(ctx: Ctx, side: Side, t: number): Action {
   const w = ctx.windows[side].find((x) => t >= x.start && t < x.end) ?? ctx.windows[side][ctx.windows[side].length - 1];
   return (w as Window).action;
@@ -47,7 +53,7 @@ export function resolveExchange(state: FightState, planA: unknown, planB: unknow
     s,
     rng,
     events: [],
-    windows: { a: windowsFor(sanitizeActions(planA).actions), b: windowsFor(sanitizeActions(planB).actions) },
+    windows: { a: windowsFor(actionsFrom(planA)), b: windowsFor(actionsFrom(planB)) },
     headDamageTaken: { a: 0, b: 0 },
     hurtThisExchange: { a: false, b: false },
     stopAt: null,

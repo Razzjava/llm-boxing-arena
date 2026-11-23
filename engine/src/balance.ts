@@ -15,7 +15,6 @@ export interface BalanceReport {
   avgThrownPerRoundPerBoxer: number;
   avgRounds: number;
   knockdownsPerFight: number;
-  fallbacks: number;
 }
 
 const PAIRS: [DemoStyle, DemoStyle][] = [
@@ -31,7 +30,6 @@ export async function runBalance(fights = 500, firstSeed = 1): Promise<BalanceRe
   let thrown = 0;
   let roundsFought = 0;
   let knockdowns = 0;
-  let fallbacks = 0;
   let earlyStoppages = 0;
 
   for (let i = 0; i < fights; i++) {
@@ -39,7 +37,9 @@ export async function runBalance(fights = 500, firstSeed = 1): Promise<BalanceRe
     // Alternate corners so red/blue order can't skew the numbers.
     const swap = Math.floor(i / matchups.length) % 2 === 1;
     const [red, blue] = swap ? [m.b, m.a] : [m.a, m.b];
-    const log = await runFight(DEMO_BUILDS[red], DEMO_BUILDS[blue], DEMO_CONTROLLERS[red], DEMO_CONTROLLERS[blue], firstSeed + i);
+    const outcome = await runFight(DEMO_BUILDS[red], DEMO_BUILDS[blue], DEMO_CONTROLLERS[red], DEMO_CONTROLLERS[blue], firstSeed + i);
+    if (outcome.status !== "completed") throw new Error(`demo fight aborted at ${outcome.step}: ${outcome.reason}`);
+    const log = outcome.log;
     const res = log.result;
     m.fights++;
     methods[res.method]++;
@@ -54,8 +54,6 @@ export async function runBalance(fights = 500, firstSeed = 1): Promise<BalanceRe
           if (e.type === "throw") thrown++;
           if (e.type === "knockdown") knockdowns++;
         }
-        if (x.plans.a.fallback) fallbacks++;
-        if (x.plans.b.fallback) fallbacks++;
       }
     }
     // A stopped round counts as the fraction of exchanges fought.
@@ -73,6 +71,5 @@ export async function runBalance(fights = 500, firstSeed = 1): Promise<BalanceRe
     avgThrownPerRoundPerBoxer: thrown / roundsFought / 2,
     avgRounds: roundsFought / fights,
     knockdownsPerFight: knockdowns / fights,
-    fallbacks,
   };
 }

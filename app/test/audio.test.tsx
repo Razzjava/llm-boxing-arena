@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { DEMO_BUILDS, DEMO_CONTROLLERS, runFight } from "@llm-boxing-arena/engine";
+import { DEMO_BUILDS, DEMO_CONTROLLERS, runFight, type FightLog } from "@llm-boxing-arena/engine";
 import { buildCommentary } from "../src/playback/commentary";
 import { buildTimeline } from "../src/playback/timeline";
 import { commentaryToSpeak, cuesBetween, limitCues, type SoundCue } from "../src/audio/cues";
@@ -62,9 +62,15 @@ describe("audio preferences", () => {
   });
 });
 
+async function demoLog(seed: number, red: "slugger" | "outBoxer" = "slugger", blue: "swarmer" | "slugger" = "swarmer"): Promise<FightLog> {
+  const outcome = await runFight(DEMO_BUILDS[red], DEMO_BUILDS[blue], DEMO_CONTROLLERS[red], DEMO_CONTROLLERS[blue], seed);
+  if (outcome.status !== "completed") throw new Error(outcome.reason);
+  return outcome.log;
+}
+
 describe("fight audio cues", () => {
   it("a 10-round demo fight rings the bell, lands light and heavy punches, and counts a knockdown", async () => {
-    const log = await runFight(DEMO_BUILDS.slugger, DEMO_BUILDS.swarmer, DEMO_CONTROLLERS.slugger, DEMO_CONTROLLERS.swarmer, 11);
+    const log = await demoLog(11);
     expect(log.rounds.length).toBeLessThanOrEqual(10);
     const tl = buildTimeline(log);
     const cues: SoundCue[] = [];
@@ -112,7 +118,7 @@ describe("fight audio cues", () => {
   });
 
   it("does not throw when speech and audio are unavailable", async () => {
-    const log = await runFight(DEMO_BUILDS.outBoxer, DEMO_BUILDS.slugger, DEMO_CONTROLLERS.outBoxer, DEMO_CONTROLLERS.slugger, 3);
+    const log = await demoLog(3, "outBoxer", "slugger");
     const tl = buildTimeline(log);
     const player = new ArenaPlayer();
     const step = { from: 0, to: 0.4, muted: false, volume: 0.8, commentary: true, timeline: tl, lines: buildCommentary(tl) };
@@ -126,7 +132,7 @@ describe("fight audio cues", () => {
 
 describe("HUD bar legend", () => {
   it("names head, body and stamina and exposes what each one does", async () => {
-    const log = await runFight(DEMO_BUILDS.slugger, DEMO_BUILDS.swarmer, DEMO_CONTROLLERS.slugger, DEMO_CONTROLLERS.swarmer, 11);
+    const log = await demoLog(11);
     const fight = { app: "llm-boxing-arena" as const, version: 1 as const, meta: { a: { label: "Red" }, b: { label: "Blue" } }, log };
     const full = { head: 100, body: 90, stamina: 80, hurt: false, knockdowns: 0, cut: 0 };
     render(<Hud fight={fight} vitals={{ a: full, b: { ...full, head: 42 } }} clock={{ round: 4, label: "1:30" }} lines={[]} />);

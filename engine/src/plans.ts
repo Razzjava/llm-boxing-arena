@@ -1,10 +1,9 @@
-// Turning whatever a controller returned into a legal plan. Bad input never stalls a fight.
+// Turning whatever a controller returned into a legal plan.
+// An unusable answer aborts the match. Nothing is replaced with a stock move.
 import type { Action, Plan, Tactic } from "./types.js";
 
 export const ACTIONS: readonly Action[] = ["jab", "cross", "hook", "uppercut", "body", "block", "slip", "clinch", "move"];
 export const TACTICS: readonly Tactic[] = ["pressure", "box", "survive"];
-export const FALLBACK_ACTIONS: Action[] = ["block", "move"];
-export const FALLBACK_TACTIC: Tactic = "box";
 const MAX_ACTIONS = 3;
 const TALK_MAX = 120;
 
@@ -22,35 +21,45 @@ const ALIASES: Record<string, Action> = {
 export interface CleanPlan {
   actions: Action[];
   talk: string;
-  fallback: boolean;
-}
-
-export function sanitizeActions(raw: unknown): CleanPlan {
-  const plan = isObject(raw) ? raw : {};
-  const talk = cleanTalk(plan.talk);
-  const list = Array.isArray(plan.actions) ? plan.actions : [];
-  const actions: Action[] = [];
-  for (const item of list) {
-    if (typeof item !== "string") continue;
-    const key = item.toLowerCase().trim();
-    const action = (ACTIONS as readonly string[]).includes(key) ? (key as Action) : ALIASES[key];
-    if (action && actions.length < MAX_ACTIONS) actions.push(action);
-  }
-  if (actions.length === 0) return { actions: [...FALLBACK_ACTIONS], talk, fallback: true };
-  return { actions, talk, fallback: false };
 }
 
 export interface CleanTactic {
   tactic: Tactic;
   talk: string;
-  fallback: boolean;
 }
 
-export function sanitizeTactic(raw: unknown): CleanTactic {
-  const plan = isObject(raw) ? (raw as Plan & Record<string, unknown>) : {};
+export type ParsedPlan = { ok: true; plan: CleanPlan } | { ok: false; reason: string };
+export type ParsedTactic = { ok: true; plan: CleanTactic } | { ok: false; reason: string };
+
+export function sanitizeActions(raw: unknown): ParsedPlan {
+  if (!isObject(raw)) return fail("not a plan");
+  if (!Array.isArray(raw.actions)) return fail("no actions");
+  if (raw.actions.length === 0) return fail("no actions");
+  if (raw.actions.length > MAX_ACTIONS) return fail("more than 3 actions");
+  const actions: Action[] = [];
+  for (const item of raw.actions) {
+    if (typeof item !== "string") return fail("invalid action");
+    const key = item.toLowerCase().trim();
+    const action = (ACTIONS as readonly string[]).includes(key) ? (key as Action) : ALIASES[key];
+    if (!action) return fail(`invalid action "${item.replace(/\s+/g, " ").trim().slice(0, 40)}"`);
+    actions.push(action);
+  }
+  return { ok: true, plan: { actions, talk: cleanTalk(raw.talk) } };
+}
+
+export function sanitizeTactic(raw: unknown): ParsedTactic {
+  if (!isObject(raw)) return fail("not a plan");
+  const plan = raw as Plan & Record<string, unknown>;
   const key = typeof plan.tactic === "string" ? plan.tactic.toLowerCase().trim() : "";
-  const ok = (TACTICS as readonly string[]).includes(key);
-  return { tactic: ok ? (key as Tactic) : FALLBACK_TACTIC, talk: cleanTalk(plan.talk), fallback: !ok };
+  if (!(TACTICS as readonly string[]).includes(key)) {
+    const shown = typeof plan.tactic === "string" && plan.tactic.trim() !== "" ? ` "${plan.tactic.replace(/\s+/g, " ").trim().slice(0, 40)}"` : "";
+    return fail(`invalid tactic${shown}`);
+  }
+  return { ok: true, plan: { tactic: key as Tactic, talk: cleanTalk(plan.talk) } };
+}
+
+function fail(detail: string): { ok: false; reason: string } {
+  return { ok: false, reason: `unusable response: ${detail}` };
 }
 
 function cleanTalk(v: unknown): string {

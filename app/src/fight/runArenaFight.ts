@@ -1,14 +1,15 @@
-// Runs a whole fight: builds both boxers, then lets the engine drive both controllers to a result.
-// The 3D playback starts once the log is complete.
+// Runs a whole fight: each model builds its boxer, then the engine drives both controllers.
+// Any failed, timed-out or unusable model call aborts the match. The 3D playback starts only
+// when the log is a completed fight.
 import {
-  DEMO_BUILDS, DEMO_CONTROLLERS, normalizeBuild, runFight,
-  type BoxerBuild, type Controller, type DemoStyle, type FightLog, type FightStateView,
+  DEMO_BUILDS, DEMO_CONTROLLERS, runFight,
+  type BoxerBuild, type BuildProvider, type Controller, type DemoStyle, type FightAbort, type FightLog, type FightStateView, type Side,
 } from "@llm-boxing-arena/engine";
 import { callModel } from "../providers/chat";
 import type { Keys, ModelInfo } from "../providers/types";
 import { PROVIDER_LABELS } from "../providers/types";
 import { LLM_CALL_TIMEOUT_MS, askForBuild, llmController, type Ask } from "../llm/controller";
-import { ProviderError } from "../providers/http";
+import { redactSecrets } from "../providers/secrets";
 
 export type CornerConfig =
   | { kind: "demo"; style: DemoStyle }
@@ -34,9 +35,6 @@ export interface FightStatus {
   exchange: number;
   thinking: { a: boolean; b: boolean };
   talk: { a: string; b: string };
-  fallbacks: { a: number; b: number };
-  lastError: { a?: string; b?: string };
-  notes: string[];
 }
 
 export interface FightSettings {
@@ -49,6 +47,16 @@ export interface FightSettings {
   callTimeoutMs?: number;
 }
 
+export interface ArenaAbort {
+  status: "aborted";
+  message: string;
+  side: Side;
+  step: string;
+  reason: string;
+}
+
+export type ArenaOutcome = { status: "completed"; fight: SavedFight } | ArenaAbort;
+
 export { LLM_CALL_TIMEOUT_MS };
 
 export function cornerMeta(c: CornerConfig): CornerMeta {
@@ -56,51 +64,58 @@ export function cornerMeta(c: CornerConfig): CornerMeta {
   return { label: `${c.model.name} via ${PROVIDER_LABELS[c.model.provider]}`, provider: c.model.provider, model: c.model.id };
 }
 
-export class FightSetupError extends Error {}
+export function formatFightAbort(settings: FightSettings, failure: FightAbort): string {
+  const cfg = settings[failure.side];
+  const corner = failure.side === "a" ? "Red corner" : "Blue corner";
+  const model = cfg.kind === "demo"
+    ? `demo bot, ${cfg.style}`
+    : `${PROVIDER_LABELS[cfg.model.provider]}, ${cfg.model.id}`;
+  const reason = failure.reason.replace(/\s+/g, " ").trim().slice(0, 300);
+  return redactSecrets(`${corner} (${model}) failed at ${failure.step}: ${reason}`);
+}
 
-export async function runArenaFight(settings: FightSettings, onStatus: (s: FightStatus) => void): Promise<SavedFight> {
+export async function runArenaFight(settings: FightSettings, onStatus: (s: FightStatus) => void): Promise<ArenaOutcome> {
   const callTimeoutMs = settings.callTimeoutMs ?? LLM_CALL_TIMEOUT_MS;
   const status: FightStatus = {
     phase: "building", round: 0, exchange: 0,
-    thinking: { a: settings.a.kind === "llm", b: false }, talk: { a: "", b: "" }, fallbacks: { a: 0, b: 0 }, lastError: {}, notes: [],
+    thinking: { a: false, b: false }, talk: { a: "", b: "" },
   };
-  const emit = () => onStatus({ ...status, thinking: { ...status.thinking }, talk: { ...status.talk }, fallbacks: { ...status.fallbacks }, lastError: { ...status.lastError }, notes: [...status.notes] });
+  const emit = () => onStatus({ ...status, thinking: { ...status.thinking }, talk: { ...status.talk } });
   emit();
 
   const askers = { a: makeAsk(settings, "a"), b: makeAsk(settings, "b") };
-  // Builds are model calls too. Finish A (or its timeout) before asking B.
-  let buildA: BoxerBuild;
-  let buildB: BoxerBuild;
-  try {
-    buildA = await buildFor(settings.a, askers.a, "red", status, "a", callTimeoutMs);
-    status.thinking.b = settings.b.kind === "llm";
-    emit();
-    buildB = await buildFor(settings.b, askers.b, "blue", status, "b", callTimeoutMs);
-  } catch (err) {
-    status.phase = "error";
-    emit();
-    throw err;
-  }
-  status.phase = "fighting";
-  status.thinking = { a: false, b: false };
-  emit();
+  const boxerFor = (side: Side): BoxerBuild | BuildProvider => {
+    const cfg = settings[side];
+    if (cfg.kind === "demo") return DEMO_BUILDS[cfg.style];
+    const ask = askers[side];
+    const corner = side === "a" ? "red" : "blue";
+    if (!ask) return () => { throw new Error("corner has no model"); };
+    return async (signal) => {
+      status.thinking[side] = true;
+      emit();
+      try {
+        const { raw } = await askForBuild(ask, corner, callTimeoutMs, signal);
+        return raw;
+      } finally {
+        status.thinking[side] = false;
+        emit();
+      }
+    };
+  };
 
-  const controllerFor = (side: "a" | "b"): Controller => {
+  const controllerFor = (side: Side): Controller => {
     const cfg = settings[side];
     const watch = {
       onThinking: (v: FightStateView) => {
+        status.phase = "fighting";
         status.round = v.round;
         status.exchange = v.exchange;
         status.thinking[side] = true;
         emit();
       },
-      onAnswer: (_v: FightStateView, plan: Record<string, unknown> | null, error?: string) => {
+      onAnswer: (_v: FightStateView, plan: Record<string, unknown> | null) => {
         status.thinking[side] = false;
         if (plan && typeof plan.talk === "string" && plan.talk) status.talk[side] = plan.talk.slice(0, 120);
-        if (error) {
-          status.fallbacks[side]++;
-          status.lastError[side] = error;
-        }
         emit();
       },
     };
@@ -113,37 +128,35 @@ export async function runArenaFight(settings: FightSettings, onStatus: (s: Fight
         return plan;
       };
     }
-    return llmController(askers[side] as Ask, side === "a" ? "red" : "blue", callTimeoutMs, watch);
+    const ask = askers[side];
+    if (!ask) return () => { throw new Error("corner has no model"); };
+    return llmController(ask, side === "a" ? "red" : "blue", callTimeoutMs, watch);
   };
 
-  const log = await runFight(buildA, buildB, controllerFor("a"), controllerFor("b"), settings.seed, { timeoutMs: callTimeoutMs });
+  const outcome = await runFight(boxerFor("a"), boxerFor("b"), controllerFor("a"), controllerFor("b"), settings.seed, { timeoutMs: callTimeoutMs });
+  if (outcome.status === "aborted") {
+    status.phase = "error";
+    status.thinking = { a: false, b: false };
+    emit();
+    return {
+      status: "aborted",
+      message: formatFightAbort(settings, outcome),
+      side: outcome.side,
+      step: outcome.step,
+      reason: outcome.reason,
+    };
+  }
   status.phase = "done";
+  status.thinking = { a: false, b: false };
   emit();
-  return { app: "llm-boxing-arena", version: 1, meta: { a: cornerMeta(settings.a), b: cornerMeta(settings.b) }, log };
+  return { status: "completed", fight: { app: "llm-boxing-arena", version: 1, meta: { a: cornerMeta(settings.a), b: cornerMeta(settings.b) }, log: outcome.log } };
 }
 
-function makeAsk(settings: FightSettings, side: "a" | "b"): Ask | null {
+function makeAsk(settings: FightSettings, side: Side): Ask | null {
   const cfg = settings[side];
   if (cfg.kind !== "llm") return null;
   const sessionId = crypto.randomUUID(); // one stable OpenCode session per fighter per fight
   const key = settings.keys[cfg.model.provider];
   return (system, user, timeoutMs, signal) =>
     callModel({ model: cfg.model, key, system, user, sessionId, viaProxy: cfg.viaProxy, proxyBase: settings.proxyBase, timeoutMs, signal });
-}
-
-async function buildFor(cfg: CornerConfig, ask: Ask | null, corner: "red" | "blue", status: FightStatus, side: "a" | "b", timeoutMs: number): Promise<BoxerBuild> {
-  if (cfg.kind === "demo" || !ask) {
-    status.thinking[side] = false;
-    return DEMO_BUILDS[cfg.kind === "demo" ? cfg.style : "outBoxer"];
-  }
-  try {
-    const { raw } = await askForBuild(ask, corner, timeoutMs);
-    const fixed = normalizeBuild(raw, corner === "red" ? "Red Corner" : "Blue Corner");
-    if (fixed.fixes.length) status.notes.push(`${corner.toUpperCase()} build repaired: ${fixed.fixes.join("; ")}`);
-    status.thinking[side] = false;
-    return fixed.build;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new FightSetupError(`${corner.toUpperCase()} corner (${cfg.model.id}): ${msg}`, { cause: err instanceof ProviderError ? err : undefined });
-  }
 }
