@@ -1,6 +1,8 @@
 {
  "app": "llm-boxing-arena",
  "version": 1,
+ "engineVersion": "0.1.0",
+ "exportedAt": "2026-11-26T20:32:01.058Z",
  "meta": {
   "a": {
    "label": "Demo bot (slugger)"
@@ -9,6 +11,1098 @@
    "label": "Demo bot (swarmer)"
   }
  },
+ "commentary": [
+  {
+   "T": 0.5,
+   "text": "Welcome to the LLM Boxing Arena! Big Tom Hale \"The Hammer\" in the red corner, Marco Reyes \"Buzzsaw\" in the blue.",
+   "kind": "call"
+  },
+  {
+   "T": 3,
+   "text": "Load up. One shot changes it.",
+   "kind": "quote",
+   "side": "a"
+  },
+  {
+   "T": 4.5,
+   "text": "Walk him down. Body, body, head.",
+   "kind": "quote",
+   "side": "b"
+  },
+  {
+   "T": 8.2,
+   "text": "Round 1!",
+   "kind": "ref"
+  },
+  {
+   "T": 20.75,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 30.75,
+   "text": "Solid body shot lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 45.75,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 49.92,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 53.25,
+   "text": "The Hammer connects with the right hand.",
+   "kind": "call"
+  },
+  {
+   "T": 55.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 60.75,
+   "text": "Solid hook lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 63.25,
+   "text": "Solid uppercut lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 79.92,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 80.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 83.25,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 90.75,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 95.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 100.75,
+   "text": "Solid hook lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 130.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 145.75,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 160.75,
+   "text": "What a hook from The Hammer!",
+   "kind": "big"
+  },
+  {
+   "T": 175.75,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 188,
+   "text": "That's the end of round 1.",
+   "kind": "ref"
+  },
+  {
+   "T": 192,
+   "text": "Load up. One shot changes it.",
+   "kind": "quote",
+   "side": "a"
+  },
+  {
+   "T": 194,
+   "text": "Walk him down. Body, body, head.",
+   "kind": "quote",
+   "side": "b"
+  },
+  {
+   "T": 196,
+   "text": "Buzzsaw's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 200.2,
+   "text": "Round 2!",
+   "kind": "ref"
+  },
+  {
+   "T": 212.75,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 217.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 217.75,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 241.92,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 242.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 245.25,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 247.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 252.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 252.75,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 257.75,
+   "text": "Huge hook by The Hammer!",
+   "kind": "big"
+  },
+  {
+   "T": 267.75,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 275.25,
+   "text": "What a uppercut from The Hammer!",
+   "kind": "big"
+  },
+  {
+   "T": 292.42,
+   "text": "Buzzsaw times it perfectly, a counter right hand!",
+   "kind": "call"
+  },
+  {
+   "T": 302.75,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 307.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 312.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 317.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 327.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 328.58,
+   "text": "The Hammer connects with the right hand.",
+   "kind": "call"
+  },
+  {
+   "T": 332.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 332.75,
+   "text": "Solid hook lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 337.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 347.75,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 347.75,
+   "text": "Solid body shot lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 352.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 365.25,
+   "text": "The Hammer connects with the right hand.",
+   "kind": "call"
+  },
+  {
+   "T": 367.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 372.75,
+   "text": "Solid hook lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 377.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 380,
+   "text": "That's the end of round 2.",
+   "kind": "ref"
+  },
+  {
+   "T": 384,
+   "text": "Load up. One shot changes it.",
+   "kind": "quote",
+   "side": "a"
+  },
+  {
+   "T": 386,
+   "text": "Walk him down. Body, body, head.",
+   "kind": "quote",
+   "side": "b"
+  },
+  {
+   "T": 388,
+   "text": "Buzzsaw's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 392.2,
+   "text": "Round 3!",
+   "kind": "ref"
+  },
+  {
+   "T": 394.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 404.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 404.75,
+   "text": "Solid hook lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 431.5,
+   "text": "Beautiful counter right hand from Buzzsaw!",
+   "kind": "call"
+  },
+  {
+   "T": 439.75,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 444.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 449.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 464.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 474.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 479.75,
+   "text": "Solid hook lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 494.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 499.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 504.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 509.75,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 514.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 519.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 529.75,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 534.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 539.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 572,
+   "text": "That's the end of round 3.",
+   "kind": "ref"
+  },
+  {
+   "T": 576,
+   "text": "Hands up, wait for the big one.",
+   "kind": "quote",
+   "side": "a"
+  },
+  {
+   "T": 578,
+   "text": "Walk him down. Body, body, head.",
+   "kind": "quote",
+   "side": "b"
+  },
+  {
+   "T": 579,
+   "text": "The Hammer's corner is telling him to survive.",
+   "kind": "call"
+  },
+  {
+   "T": 580,
+   "text": "Buzzsaw's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 584.2,
+   "text": "Round 4!",
+   "kind": "ref"
+  },
+  {
+   "T": 586.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 591.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 606.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 636.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 656.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 661.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 666.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 666.75,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 671.75,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 671.85,
+   "text": "The Hammer is cut over the left eyebrow.",
+   "kind": "call"
+  },
+  {
+   "T": 686.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 691.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 696.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 726.75,
+   "text": "Buzzsaw digs to the body.",
+   "kind": "call"
+  },
+  {
+   "T": 761.75,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 764,
+   "text": "That's the end of round 4.",
+   "kind": "ref"
+  },
+  {
+   "T": 768,
+   "text": "Hands up, wait for the big one.",
+   "kind": "quote",
+   "side": "a"
+  },
+  {
+   "T": 770,
+   "text": "Walk him down. Body, body, head.",
+   "kind": "quote",
+   "side": "b"
+  },
+  {
+   "T": 771,
+   "text": "The Hammer's corner is telling him to survive.",
+   "kind": "call"
+  },
+  {
+   "T": 772,
+   "text": "Buzzsaw's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 776.2,
+   "text": "Round 5!",
+   "kind": "ref"
+  },
+  {
+   "T": 778.75,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 783.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 793.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 801.25,
+   "text": "Buzzsaw connects with the uppercut.",
+   "kind": "call"
+  },
+  {
+   "T": 823.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 833.75,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 956,
+   "text": "That's the end of round 5.",
+   "kind": "ref"
+  },
+  {
+   "T": 960,
+   "text": "He can't take another one. Go get him.",
+   "kind": "quote",
+   "side": "a"
+  },
+  {
+   "T": 962,
+   "text": "Walk him down. Body, body, head.",
+   "kind": "quote",
+   "side": "b"
+  },
+  {
+   "T": 963,
+   "text": "The Hammer's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 964,
+   "text": "Buzzsaw's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 968.2,
+   "text": "Round 6!",
+   "kind": "ref"
+  },
+  {
+   "T": 973.25,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 995.75,
+   "text": "Solid body shot lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1055.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1055.75,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1070.75,
+   "text": "Buzzsaw digs to the body.",
+   "kind": "call"
+  },
+  {
+   "T": 1133.25,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1136.58,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1148,
+   "text": "That's the end of round 6.",
+   "kind": "ref"
+  },
+  {
+   "T": 1152,
+   "text": "He can't take another one. Go get him.",
+   "kind": "quote",
+   "side": "a"
+  },
+  {
+   "T": 1154,
+   "text": "Walk him down. Body, body, head.",
+   "kind": "quote",
+   "side": "b"
+  },
+  {
+   "T": 1155,
+   "text": "The Hammer's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 1156,
+   "text": "Buzzsaw's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 1160.2,
+   "text": "Round 7!",
+   "kind": "ref"
+  },
+  {
+   "T": 1162.75,
+   "text": "Buzzsaw digs to the body.",
+   "kind": "call"
+  },
+  {
+   "T": 1167.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1175.25,
+   "text": "What a uppercut from The Hammer!",
+   "kind": "big"
+  },
+  {
+   "T": 1177.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 1202.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1217.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1222.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1231.92,
+   "text": "Buzzsaw connects with the right hand.",
+   "kind": "call"
+  },
+  {
+   "T": 1238.58,
+   "text": "Solid right hand lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1242.75,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1261.92,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1277.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1282.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1295.25,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1297.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1298.58,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1302.75,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1322.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 1328.58,
+   "text": "The Hammer connects with the right hand.",
+   "kind": "call"
+  },
+  {
+   "T": 1340,
+   "text": "That's the end of round 7.",
+   "kind": "ref"
+  },
+  {
+   "T": 1344,
+   "text": "He can't take another one. Go get him.",
+   "kind": "quote",
+   "side": "a"
+  },
+  {
+   "T": 1345,
+   "text": "The cutman works on The Hammer's left eyebrow.",
+   "kind": "call"
+  },
+  {
+   "T": 1346,
+   "text": "Walk him down. Body, body, head.",
+   "kind": "quote",
+   "side": "b"
+  },
+  {
+   "T": 1347,
+   "text": "The Hammer's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 1348,
+   "text": "Buzzsaw's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 1352.2,
+   "text": "Round 8!",
+   "kind": "ref"
+  },
+  {
+   "T": 1364.75,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1374.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1374.75,
+   "text": "What a hook from The Hammer!",
+   "kind": "big"
+  },
+  {
+   "T": 1374.85,
+   "text": "Buzzsaw is cut over the left eyebrow.",
+   "kind": "call"
+  },
+  {
+   "T": 1379.75,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1393.92,
+   "text": "The Hammer connects with the right hand.",
+   "kind": "call"
+  },
+  {
+   "T": 1394.75,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 1404.75,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1404.75,
+   "text": "Solid hook lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1409.75,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1410.15,
+   "text": "DOWN GOES BUZZSAW! A hook from The Hammer did it!",
+   "kind": "big"
+  },
+  {
+   "T": 1413.45,
+   "text": "Buzzsaw is up at 3!",
+   "kind": "call"
+  },
+  {
+   "T": 1433.4,
+   "text": "Solid uppercut lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1433.5,
+   "text": "Buzzsaw is cut over the right eyebrow.",
+   "kind": "call"
+  },
+  {
+   "T": 1437.15,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 1443.4,
+   "text": "The Hammer connects with the right hand.",
+   "kind": "call"
+  },
+  {
+   "T": 1465.9,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1466.73,
+   "text": "The Hammer connects with the right hand.",
+   "kind": "call"
+  },
+  {
+   "T": 1475.9,
+   "text": "Solid hook lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1500.9,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1538.15,
+   "text": "That's the end of round 8.",
+   "kind": "ref"
+  },
+  {
+   "T": 1542.15,
+   "text": "He can't take another one. Go get him.",
+   "kind": "quote",
+   "side": "a"
+  },
+  {
+   "T": 1543.15,
+   "text": "The cutman works on Buzzsaw's left eyebrow.",
+   "kind": "call"
+  },
+  {
+   "T": 1544.15,
+   "text": "Walk him down. Body, body, head.",
+   "kind": "quote",
+   "side": "b"
+  },
+  {
+   "T": 1545.15,
+   "text": "The Hammer's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 1546.15,
+   "text": "Buzzsaw's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 1550.3500000000001,
+   "text": "Round 9!",
+   "kind": "ref"
+  },
+  {
+   "T": 1562.9,
+   "text": "Huge hook by The Hammer!",
+   "kind": "big"
+  },
+  {
+   "T": 1567.9,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1595.4,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1598.73,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1602.9,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1607.9,
+   "text": "The Hammer connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1612.9,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1627.9,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1632.9,
+   "text": "Solid body shot lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1642.9,
+   "text": "Buzzsaw connects with the hook.",
+   "kind": "call"
+  },
+  {
+   "T": 1655.4,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1665.4,
+   "text": "Solid uppercut lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1665.5,
+   "text": "The Hammer is cut over the right eyebrow.",
+   "kind": "call"
+  },
+  {
+   "T": 1682.9,
+   "text": "Buzzsaw connects with the body shot.",
+   "kind": "call"
+  },
+  {
+   "T": 1730.15,
+   "text": "That's the end of round 9.",
+   "kind": "ref"
+  },
+  {
+   "T": 1734.15,
+   "text": "He can't take another one. Go get him.",
+   "kind": "quote",
+   "side": "a"
+  },
+  {
+   "T": 1735.15,
+   "text": "The cutman works on Buzzsaw's right eyebrow.",
+   "kind": "call"
+  },
+  {
+   "T": 1736.15,
+   "text": "Walk him down. Body, body, head.",
+   "kind": "quote",
+   "side": "b"
+  },
+  {
+   "T": 1737.15,
+   "text": "The Hammer's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 1738.15,
+   "text": "Buzzsaw's corner wants pressure next round.",
+   "kind": "call"
+  },
+  {
+   "T": 1742.3500000000001,
+   "text": "Round 10!",
+   "kind": "ref"
+  },
+  {
+   "T": 1754.9,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1774.9,
+   "text": "Solid hook lands for Buzzsaw.",
+   "kind": "call"
+  },
+  {
+   "T": 1784.0700000000002,
+   "text": "The Hammer connects with the right hand.",
+   "kind": "call"
+  },
+  {
+   "T": 1790.73,
+   "text": "Solid right hand lands for The Hammer.",
+   "kind": "call"
+  },
+  {
+   "T": 1791.13,
+   "text": "DOWN GOES BUZZSAW! A right hand from The Hammer did it!",
+   "kind": "big"
+  },
+  {
+   "T": 1800.43,
+   "text": "Buzzsaw is up at 9!",
+   "kind": "call"
+  },
+  {
+   "T": 1800.63,
+   "text": "The referee stops it! unsteady after the knockdown.",
+   "kind": "big"
+  },
+  {
+   "T": 1803.15,
+   "text": "Big Tom Hale wins by TKO in round 10! referee waved it off after a knockdown.",
+   "kind": "big"
+  }
+ ],
  "log": {
   "version": 1,
   "seed": 11,

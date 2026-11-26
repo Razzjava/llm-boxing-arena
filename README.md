@@ -105,9 +105,20 @@ and a spoken-commentary toggle. Sound stays off until you turn it on, so the bro
 
 ## Fight logs and replay
 
-Download a fight log (JSON) from the controls or the result card. Upload one on the setup screen and the
-app re-runs it through the engine's `replayFight`, tells you whether the result is identical to the file,
-then plays it back. Logs contain builds, every plan, every event and the result, but no keys.
+When a fight completes (KO, TKO or a decision), **Download fight log** saves
+`fight-<date>-<red>-vs-<blue>.json`. The file is version 1 and holds the engine version, seed, both
+builds, each corner's provider and model id (labels only), every corner tactic and exchange plan, the
+commentary lines, and the result with scorecards. It never contains API keys, request headers or prompts.
+An aborted match has no result and cannot be exported.
+
+On the setup screen, **Replay a fight log** takes that file from the picker or a drag-and-drop. The app
+checks the version, shape and size, then re-runs `replayFight`. If the replay does not match the file, it
+stops with an incompatible-log error and does not show a different outcome. A matching log plays in the
+same 3D view, with a Replay badge, the same punches and the same result. Pause and speed still work. The
+replay makes no model or network calls, needs no keys, and is not added to this tab's results.
+
+`samples/demo-fight-seed-11.json` is the seed-11 demo (red slugger vs blue swarmer) so you can try it
+without fighting first.
 
 ## Tests
 
@@ -132,7 +143,8 @@ node run-e2e.mjs     # writes screenshots, a ~20-40 s video, a fight log and e2e
 It starts `vite preview`, checks the OpenCode Console and Go lists load in the picker, starts a fight with a
 fake OpenCode key and checks the UI shows OpenCode's 401 as a readable error (and that the key never reaches
 the server log), plays seed 11 demo vs demo at 4x to the result (round 1, knockdown, replay, scorecard),
-downloads and re-uploads the log, and toggles low quality.
+downloads the log, reloads, uploads it, and checks the replay reaches the same result with no extra
+network calls. It also toggles low quality.
 
 ## Assets and credits (all CC0)
 

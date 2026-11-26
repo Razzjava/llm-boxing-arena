@@ -7,7 +7,7 @@ export { resolveExchange } from "./exchange.js";
 export { endRound } from "./round.js";
 export { JUDGES, decide, scoreRoundForJudge } from "./judging.js";
 export {
-  runFight, replayFight, summarize, timeoutReason, DEFAULT_CALL_TIMEOUT_MS,
+  runFight, replayFight, summarize, timeoutReason, DEFAULT_CALL_TIMEOUT_MS, ENGINE_VERSION,
   type Controller, type BuildProvider, type FightLog, type FightOutcome, type FightAbort, type RoundLog, type ExchangeLog,
 } from "./fight.js";
 export { DEMO_BUILDS, DEMO_CONTROLLERS, type DemoStyle } from "./controllers.js";

@@ -1,5 +1,5 @@
 {
-  "started": "2026-11-23T09:13:01.636Z",
+  "started": "2026-11-26T20:30:56.958Z",
   "checks": {
     "setup screen renders": {
       "ok": true
@@ -28,8 +28,8 @@
     "OpenCode Go model list loads in the picker": {
       "ok": true,
       "detail": {
-        "models": 30,
-        "source": "30 models loaded live"
+        "models": 31,
+        "source": "31 models loaded live"
       }
     },
     "reload clears keys": {
@@ -67,23 +67,37 @@
     "fight log downloads (no keys inside)": {
       "ok": true,
       "detail": {
-        "file": "fight-log-seed11.json",
-        "bytes": 269668
+        "file": "fight-2026-11-26-Big-Tom-Hale-vs-Marco-Reyes.json",
+        "bytes": 289726
       }
+    },
+    "fight log file name": {
+      "ok": true,
+      "detail": "fight-2026-11-26-Big-Tom-Hale-vs-Marco-Reyes.json"
     },
     "low-quality toggle": {
       "ok": true
     },
-    "uploaded log replays identically via replayFight": {
+    "replay badge is visible": {
+      "ok": true
+    },
+    "replay makes no network calls": {
       "ok": true,
-      "detail": "Replayed with the engine: identical to the saved fight."
+      "detail": []
+    },
+    "uploaded log replays to the same result": {
+      "ok": true,
+      "detail": {
+        "before": "×Big Tom Hale “The Hammer” winsby TKO · round 10 at 0:58referee waved it off after a knockdown🔴 Demo bot (slugger) vs 🔵 Demo bot (swarmer) · seed 11ScorecardsJudgeR1R2R3R4R5R6R7R",
+        "after": "×Big Tom Hale “The Hammer” winsby TKO · round 10 at 0:58referee waved it off after a knockdown🔴 Demo bot (slugger) vs 🔵 Demo bot (swarmer) · seed 11ScorecardsJudgeR1R2R3R4R5R6R7R"
+      }
     },
     "video recorded (20–40 s target)": {
       "ok": true,
       "detail": {
         "file": "fight-demo.webm",
         "approxSeconds": 23,
-        "bytes": 7752317
+        "bytes": 7373760
       }
     },
     "proxy server log never contains the key": {
@@ -113,7 +127,7 @@
     ],
     "res": 1802.15
   },
-  "resultWaitMs": 9212,
-  "finished": "2026-11-23T09:15:09.870Z",
+  "resultWaitMs": 8867,
+  "finished": "2026-11-26T20:33:22.855Z",
   "allPassed": true
 }

@@ -47,8 +47,12 @@ details input { margin-top: 6px; }
 .opt-meta { color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
 .start { display: flex; flex-direction: column; gap: 8px; }
 .big-btn { font-size: 1.3rem; font-weight: 700; padding: 12px; background: linear-gradient(90deg, #8f1a22, #1b3f9c); border: none; margin-top: 6px; }
-.upload { font-size: 0.85rem; color: var(--muted); }
+.upload { font-size: 0.85rem; color: var(--muted); display: block; }
 .upload input { margin-top: 4px; }
+.replay-drop { border-style: dashed; }
+.replay-drop.drag { border-color: var(--gold); background: #1c180d; }
+.replay-drop h2 { font-size: 1.05rem; }
+.replay-drop p { margin: 0 0 8px; }
 .sim { margin-top: 18px; }
 .sim-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .sim-corner { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
@@ -100,8 +104,8 @@ q { display: block; font-style: italic; color: #cfd6e6; margin-top: 6px; }
 .controls .sep { width: 10px; }
 .controls label { display: flex; gap: 4px; align-items: center; }
 .controls .audio-volume input { width: 88px; }
-.replay-banner { position: absolute; top: 140px; left: 50%; transform: translateX(-50%); background: #c0181fe6; padding: 6px 18px; border-radius: 8px; font-weight: 800; letter-spacing: 0.1em; }
-.info-banner { position: absolute; top: 140px; right: 12px; background: #10261ae6; border: 1px solid #1f5a37; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; max-width: 340px; }
+.replay-badge { position: absolute; top: 108px; left: 50%; transform: translateX(-50%); z-index: 5; background: var(--gold); color: #1a1203; font-weight: 800; letter-spacing: 0.14em; font-size: 0.78rem; padding: 4px 14px; border-radius: 999px; pointer-events: none; }
+.replay-banner { position: absolute; top: 148px; left: 50%; transform: translateX(-50%); z-index: 5; background: #c0181fe6; padding: 6px 18px; border-radius: 8px; font-weight: 800; letter-spacing: 0.1em; }
 .result { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(980px, 94vw); max-height: 82vh; overflow: auto; background: #0d1018f2; border: 1px solid #ffffff22; border-radius: 16px; padding: 20px 24px; box-shadow: 0 20px 60px #000c; }
 .result .close { position: absolute; right: 12px; top: 10px; }
 .result-head { text-align: center; padding-bottom: 10px; border-bottom: 1px solid var(--line); }

@@ -160,11 +160,19 @@ try {
   report.resultWaitMs = Date.now() - t0;
 
   // Fight log download
+  const resultBefore = (await page.textContent('[data-testid=result-card]'))?.replace(/\s+/g, ' ').trim();
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('[data-testid=download-log-result]')]);
+  const suggested = dl.suggestedFilename();
   const logPath = path.join(proof, 'fight-log-seed11.json');
   await dl.saveAs(logPath);
   const saved = JSON.parse(fs.readFileSync(logPath, 'utf8'));
-  check('fight log downloads (no keys inside)', saved.app && saved.log && !JSON.stringify(saved).includes(FAKE_KEY), { file: path.basename(logPath), bytes: fs.statSync(logPath).size });
+  const savedText = JSON.stringify(saved);
+  check(
+    'fight log downloads (no keys inside)',
+    saved.app === 'llm-boxing-arena' && saved.version === 1 && saved.engineVersion && saved.log?.result && Array.isArray(saved.commentary) && saved.commentary.length > 0 && !!saved.meta?.a?.label && !savedText.includes(FAKE_KEY) && !/authorization|apiKey|api_key|"prompt"/.test(savedText),
+    { file: suggested, bytes: fs.statSync(logPath).size },
+  );
+  check('fight log file name', /^fight-\d{4}-\d{2}-\d{2}-Big-Tom-Hale-vs-Marco-Reyes\.json$/.test(suggested), suggested);
 
   // Low quality toggle
   await page.click('[data-testid=quality]');
@@ -174,14 +182,39 @@ try {
   await shot(page, '08-low-quality.png');
   check('low-quality toggle', /low/i.test(await page.textContent('[data-testid=quality]')));
 
-  // Upload the log -> replayed through the engine
+  // Reload, upload the log, and replay it to the same result with no network calls.
   await page.getByRole('button', { name: 'New fight' }).first().click();
+  await page.reload();
+  await page.waitForSelector('[data-testid=replay-drop]');
+  await page.locator('[data-testid=replay-drop]').scrollIntoViewIfNeeded();
+  await shot(page, 'replay-upload.png');
+  const during = [];
+  const onReq = (req) => during.push(req.url());
+  page.on('request', onReq);
   await page.setInputFiles('[data-testid=upload-log]', logPath);
-  await page.waitForSelector('[data-testid=info-banner]', { timeout: 30000 });
-  const info = await page.textContent('[data-testid=info-banner]');
-  await page.waitForTimeout(2500);
+  await page.waitForSelector('[data-testid=replay-badge]', { timeout: 30000 });
+  await page.waitForSelector('[data-testid=watch]');
+  await page.waitForFunction(() => window.__arena && window.__arena.store);
+  check('replay badge is visible', /Replay/.test(await page.textContent('[data-testid=replay-badge]') ?? ''));
+  // Intro is 8 fight-seconds. Step into round 1 so the shot shows the bout, not the walk-in.
+  await page.evaluate(() => { window.__arena.store.T = 36; window.__arena.store.playing = true; });
+  await page.waitForTimeout(700);
+  await shot(page, 'replay-playing.png');
   await shot(page, '09-uploaded-log-replay.png');
-  check('uploaded log replays identically via replayFight', /identical/i.test(info ?? ''), info);
+  const leaked = during.filter((u) => !u.startsWith(BASE) && !u.startsWith('data:') && !u.startsWith('blob:'));
+  page.off('request', onReq);
+  check('replay makes no network calls', leaked.length === 0, leaked.slice(0, 5));
+  await page.evaluate(() => { window.__arena.store.skipToResult(); });
+  await page.waitForSelector('[data-testid=result-card]', { timeout: 30000 });
+  const resultAfter = (await page.textContent('[data-testid=result-card]'))?.replace(/\s+/g, ' ').trim();
+  const winnerName = saved.log.result.winner ? saved.log.builds[saved.log.result.winner].name : 'draw';
+  const card = saved.log.result.scorecards[0];
+  const totals = card ? `${card.totalA}-${card.totalB}` : '';
+  check(
+    'uploaded log replays to the same result',
+    !!resultAfter && resultAfter.includes(winnerName) && resultAfter.includes(saved.log.result.method) && resultAfter.includes(`round ${saved.log.result.round}`) && (totals === '' || resultAfter.includes(totals)) && !!resultBefore?.includes(saved.log.result.method),
+    { before: resultBefore?.slice(0, 180), after: resultAfter?.slice(0, 180) },
+  );
   await ctx.close();
 
   // ---------------------------------------------------------------- short video (~30 s)

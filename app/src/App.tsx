@@ -5,11 +5,13 @@ import { SimStatus } from "./ui/SimStatus";
 import { EMPTY_KEYS, type Keys, type ModelList, type OpenCodePlan, type ProviderId } from "./providers/types";
 import { loadModels } from "./providers/modelLists";
 import { cornerMeta, runArenaFight, type CornerConfig, type FightStatus, type SavedFight } from "./fight/runArenaFight";
+import { recordResult } from "./fight/record";
 import { loadFight } from "./fight/savedFight";
 
 const Watch = lazy(() => import("./ui/Watch"));
 
 type Phase = "setup" | "simulating" | "watching";
+type WatchMode = "live" | "replay";
 
 function toConfig(c: CornerChoice, viaProxy: Record<ProviderId, boolean>): CornerConfig | null {
   if (c.source === "demo") return { kind: "demo", style: c.demoStyle };
@@ -32,8 +34,9 @@ export function App() {
   const [phase, setPhase] = useState<Phase>("setup");
   const [status, setStatus] = useState<FightStatus | null>(null);
   const [fight, setFight] = useState<SavedFight | null>(null);
+  const [watchMode, setWatchMode] = useState<WatchMode>("live");
+  const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   const keysRef = useRef(keys);
   keysRef.current = keys;
 
@@ -83,17 +86,19 @@ export function App() {
   async function startFight() {
     if (!configs.a || !configs.b) return;
     setError(null);
-    setInfo(null);
     setPhase("simulating");
     try {
       const outcome = await runArenaFight({ a: configs.a, b: configs.b, keys, proxyBase, seed }, setStatus);
       if (outcome.status === "aborted") {
         setError(outcome.message);
         setFight(null);
+        setWatchMode("live");
         setPhase("setup");
         return;
       }
+      recordResult(outcome.fight);
       setFight(outcome.fight);
+      setWatchMode("live");
       setPhase("watching");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -105,11 +110,15 @@ export function App() {
     if (!file) return;
     setError(null);
     try {
-      const { fight: f, identical } = await loadFight(await file.text());
-      setInfo(identical ? "Replayed with the engine: identical to the saved fight." : "Note: the engine's replay differs from the file (was it edited?). Showing the engine's replay.");
-      setFight(f);
+      const loaded = await loadFight(await file.text());
+      // A replay is playback only: recordResult is for a fight that just finished.
+      setFight(loaded);
+      setWatchMode("replay");
       setPhase("watching");
     } catch (err) {
+      setFight(null);
+      setWatchMode("live");
+      setPhase("setup");
       setError(err instanceof Error ? err.message : String(err));
     }
   }
@@ -117,7 +126,7 @@ export function App() {
   if (phase === "watching" && fight) {
     return (
       <Suspense fallback={<div className="loading">Loading the arena…</div>}>
-        <Watch fight={fight} info={info} onExit={() => { setPhase("setup"); setFight(null); }} />
+        <Watch fight={fight} mode={watchMode} onExit={() => { setPhase("setup"); setFight(null); setWatchMode("live"); }} />
       </Suspense>
     );
   }
@@ -157,9 +166,37 @@ export function App() {
               <button type="button" className="big-btn" disabled={!ready} onClick={startFight} data-testid="start-fight">
                 Fight!
               </button>
+            </section>
+            <section
+              className={`panel replay-drop${dragOver ? " drag" : ""}`}
+              data-testid="replay-drop"
+              aria-label="Replay a fight log"
+              onDragEnter={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={(e) => {
+                if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+                setDragOver(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                void onUpload(e.dataTransfer.files?.[0]);
+              }}
+            >
+              <h2>Replay a fight log</h2>
+              <p className="small muted">Drop a fight JSON here, or choose a file. Playback uses the saved log only: no model calls and no API keys.</p>
               <label className="upload">
-                Replay a saved fight (.json)
-                <input type="file" accept="application/json,.json" data-testid="upload-log" onChange={(e) => void onUpload(e.target.files?.[0])} />
+                Choose fight log
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  data-testid="upload-log"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    void onUpload(file);
+                  }}
+                />
               </label>
             </section>
           </div>

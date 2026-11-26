@@ -43,6 +43,9 @@ export interface RoundLog {
   betweenRounds: FightEvent[];
 }
 
+/** Engine package version stamped on exported fight files. */
+export const ENGINE_VERSION = "0.1.0";
+
 export interface FightLog {
   version: 1;
   seed: number;
