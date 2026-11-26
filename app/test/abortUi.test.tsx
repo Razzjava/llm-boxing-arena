@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { App } from "../src/App";
+import { fightHistory, resetArenaRecord } from "../src/fight/record";
 
 const SECRET = "sk-test-ui-secret-value";
 
@@ -35,6 +36,7 @@ function chat(text: string, status = 200): Response {
 
 afterEach(() => {
   cleanup();
+  resetArenaRecord();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -56,6 +58,9 @@ function expectBackOnSetup() {
   expect(screen.queryByTestId("watch")).toBeNull();
   expect(screen.queryByTestId("sim-status")).toBeNull();
   expect(screen.queryByTestId("result-card")).toBeNull();
+  expect(screen.queryByTestId("download-log")).toBeNull();
+  expect(screen.queryByTestId("download-log-result")).toBeNull();
+  expect(fightHistory()).toEqual([]);
 }
 
 describe("a failed model call returns to setup", () => {

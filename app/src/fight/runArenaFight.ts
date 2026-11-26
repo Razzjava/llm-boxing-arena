@@ -2,7 +2,7 @@
 // Any failed, timed-out or unusable model call aborts the match. The 3D playback starts only
 // when the log is a completed fight.
 import {
-  DEMO_BUILDS, DEMO_CONTROLLERS, runFight,
+  DEMO_BUILDS, DEMO_CONTROLLERS, ENGINE_VERSION, runFight,
   type BoxerBuild, type BuildProvider, type Controller, type DemoStyle, type FightAbort, type FightLog, type FightStateView, type Side,
 } from "@llm-boxing-arena/engine";
 import { callModel } from "../providers/chat";
@@ -10,6 +10,7 @@ import type { Keys, ModelInfo } from "../providers/types";
 import { PROVIDER_LABELS } from "../providers/types";
 import { LLM_CALL_TIMEOUT_MS, askForBuild, llmController, type Ask } from "../llm/controller";
 import { redactSecrets } from "../providers/secrets";
+import type { Line } from "../playback/commentary";
 
 export type CornerConfig =
   | { kind: "demo"; style: DemoStyle }
@@ -21,12 +22,16 @@ export interface CornerMeta {
   model?: string;
 }
 
-/** What a saved fight file holds. No keys, ever. */
+/** What a saved fight file holds. No keys, headers or prompts, ever. */
 export interface SavedFight {
   app: "llm-boxing-arena";
   version: 1;
+  /** Engine that produced the log. Older files may omit it. */
+  engineVersion?: string;
   meta: { a: CornerMeta; b: CornerMeta };
   log: FightLog;
+  /** Spoken lines from the broadcast. Omitted on a live fight until the file is written. */
+  commentary?: Line[];
 }
 
 export interface FightStatus {
@@ -149,7 +154,16 @@ export async function runArenaFight(settings: FightSettings, onStatus: (s: Fight
   status.phase = "done";
   status.thinking = { a: false, b: false };
   emit();
-  return { status: "completed", fight: { app: "llm-boxing-arena", version: 1, meta: { a: cornerMeta(settings.a), b: cornerMeta(settings.b) }, log: outcome.log } };
+  return {
+    status: "completed",
+    fight: {
+      app: "llm-boxing-arena",
+      version: 1,
+      engineVersion: ENGINE_VERSION,
+      meta: { a: cornerMeta(settings.a), b: cornerMeta(settings.b) },
+      log: outcome.log,
+    },
+  };
 }
 
 function makeAsk(settings: FightSettings, side: Side): Ask | null {

@@ -53,9 +53,12 @@ function download(fight: SavedFight) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export default function Watch({ fight, info, onExit }: { fight: SavedFight; info: string | null; onExit: () => void }) {
+export default function Watch({ fight, mode, onExit }: { fight: SavedFight; mode: "live" | "replay"; onExit: () => void }) {
   const tl = useMemo(() => buildTimeline(fight.log), [fight]);
-  const lines = useMemo(() => buildCommentary(tl), [tl]);
+  const lines = useMemo(
+    () => (mode === "replay" && fight.commentary && fight.commentary.length > 0 ? fight.commentary : buildCommentary(tl)),
+    [fight, mode, tl],
+  );
   const store = useMemo(() => new PlaybackStore(tl), [tl]);
   const [camera, setCamera] = useState<CameraChoice>("auto");
   const [quality, setQuality] = useState<"high" | "low">("high");
@@ -127,12 +130,14 @@ export default function Watch({ fight, info, onExit }: { fight: SavedFight; info
       </Canvas>
 
       <Hud fight={fight} vitals={vitalsAt(tl, T)} clock={clockAt(tl, T)} lines={linesAt(lines, T, 5)} />
+      {mode === "replay" && (
+        <div className="replay-badge" data-testid="replay-badge" role="status">Replay</div>
+      )}
       {store.replay && (
         <div className="replay-banner" data-testid="replay-banner">
           ⟲ REPLAY · knockdown in slow motion
         </div>
       )}
-      {info && <div className="info-banner" data-testid="info-banner">{info}</div>}
 
       <div className="controls" data-testid="controls">
         <button type="button" onClick={() => (store.playing = !store.playing)} data-testid="play-pause">
@@ -162,7 +167,7 @@ export default function Watch({ fight, info, onExit }: { fight: SavedFight; info
         <span className="sep" />
         <AudioControls prefs={prefs} onChange={onAudio} />
         <button type="button" onClick={() => download(fight)} data-testid="download-log">
-          ⬇ Fight log
+          Download fight log
         </button>
         <button type="button" onClick={onExit}>
           New fight
