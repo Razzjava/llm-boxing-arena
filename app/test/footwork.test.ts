@@ -7,9 +7,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DEMO_BUILDS, DEMO_CONTROLLERS, runFight, type Side } from "@llm-boxing-arena/engine";
 import { buildTimeline, segmentAt } from "../src/playback/timeline";
-import { activityAt, circleAngle, layoutAt, trailerShift } from "../src/scene/choreo";
+import { activityAt, CANVAS_Y, circleAngle, layoutAt, trailerShift } from "../src/scene/choreo";
 import { closeupAt, replayTight } from "../src/scene/impact";
-import { footCycle, knockdownPose, poseFightersAt, risePose } from "../src/scene/pose";
+import { FLOOR_BONES, FLOOR_EPSILON, footCycle, knockdownPose, poseFightersAt, risePose } from "../src/scene/pose";
 import { CharacterRig } from "../src/scene/rig";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -29,8 +29,8 @@ describe("footwork, knockdown and the second body", () => {
     expect(early.back).toBe(0);
     const late = knockdownPose(0.75);
     expect(late.knee).toBe(1);
-    expect(late.drop).toBeGreaterThan(0.4);
-    expect(late.back).toBeGreaterThan(1);
+    expect(late.drop).toBeGreaterThan(0.3);
+    expect(late.back).toBeGreaterThan(0.8);
     expect(late.limp).toBe(1);
     const down = knockdownPose(0);
     const up = risePose(1.4);
@@ -117,13 +117,29 @@ describe("footwork, knockdown and the second body", () => {
 
   it("gives the blue corner the bald body on the same skeleton", async () => {
     const [base, bald] = await Promise.all([loadGlb("boxer.glb"), loadGlb("boxer-b.glb")]);
-    const red = new CharacterRig(base.scene, base.animations, { skin: "#c58c62", gloves: "#d4141f", trunks: "#b3121b" });
+    const red = new CharacterRig(base.scene, base.animations, { skin: "#c58c62", gloves: "#d4141f", trunks: "#b3121b", trim: "#f5d76e", boots: "#1b1b1b" });
     const blue = new CharacterRig(bald.scene, bald.animations, {
       skin: "#8d5a3b",
       gloves: "#1b5be0",
       trunks: "#1746b8",
-      colors: { Shirt: "#102a66", Face: "#8d5a3b" },
+      boots: "#f2f2f2",
+      bare: true,
     });
+    const skinHex = "8d5a3b";
+    let sawCloth = false;
+    blue.root.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh || !mesh.visible) return;
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      for (const mat of mats) {
+        const std = mat as THREE.MeshStandardMaterial;
+        if (std.name === "Shirt" || std.name === "Pants" || std.name === "Belt" || std.name === "Face" || std.name === "Hair") {
+          sawCloth = true;
+          expect(std.color.getHexString(), std.name).toBe(skinHex);
+        }
+      }
+    });
+    expect(sawCloth).toBe(true);
     for (const key of ["hips", "abdomen", "torso", "head", "upperL", "fistL", "upperLegL", "footL", "upperLegR", "footR"] as const) {
       expect(red.bones[key], key).toBeTruthy();
       expect(blue.bones[key], key).toBeTruthy();
@@ -146,5 +162,43 @@ describe("footwork, knockdown and the second body", () => {
       expect(foot.y).toBeGreaterThan(0.9);
       expect(foot.y).toBeLessThan(1.35);
     }
+    const hips = red.world("hips");
+    let band = false;
+    red.root.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh || mesh.parent?.name !== "Hips") return;
+      const color = (mesh.material as THREE.MeshStandardMaterial).color?.getHexString();
+      if (color !== "f5d76e") return;
+      band = true;
+      const y = mesh.getWorldPosition(new THREE.Vector3()).y;
+      expect(Math.abs(y - hips.y)).toBeLessThan(0.25);
+    });
+    expect(band).toBe(true);
+  });
+
+  it("keeps every knockdown bone on or above the canvas", async () => {
+    const outcome = await runFight(DEMO_BUILDS.slugger, DEMO_BUILDS.swarmer, DEMO_CONTROLLERS.slugger, DEMO_CONTROLLERS.swarmer, 11);
+    if (outcome.status !== "completed") throw new Error(outcome.reason);
+    const tl = buildTimeline(outcome.log);
+    const [base, bald] = await Promise.all([loadGlb("boxer.glb"), loadGlb("boxer-b.glb")]);
+    const rigs = {
+      a: new CharacterRig(base.scene, base.animations, { skin: "#c58c62", gloves: "#d4141f", trunks: "#b3121b", boots: "#1b1b1b" }),
+      b: new CharacterRig(bald.scene, bald.animations, { skin: "#8d5a3b", gloves: "#1b5be0", trunks: "#1746b8", boots: "#f2f2f2", bare: true }),
+    };
+    const lead = { a: "L" as const, b: "L" as const };
+    const kd = tl.knockdowns[0];
+    expect(kd).toBeTruthy();
+    let samples = 0;
+    for (let T = kd!.T; T <= kd!.T + 4; T += 0.25) {
+      poseFightersAt(rigs, tl, T, lead, { a: false, b: false });
+      for (const side of ["a", "b"] as Side[]) {
+        for (const key of FLOOR_BONES) {
+          const y = rigs[side].world(key).y;
+          expect(y, `${side} ${key} at ${T.toFixed(2)}`).toBeGreaterThanOrEqual(CANVAS_Y - FLOOR_EPSILON);
+        }
+      }
+      samples++;
+    }
+    expect(samples).toBeGreaterThan(8);
   });
 });

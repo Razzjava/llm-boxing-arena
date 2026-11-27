@@ -71,7 +71,7 @@ try {
     return {
       step,
       body: first ? first.start + 1.2 : 8,
-      knockdown: kd ? kd.T + 0.42 : null,
+      knockdown: kd ? kd.T + 0.8 : null,
     };
   });
   if (!marks.step || marks.knockdown == null) throw new Error("seed 11 is missing a standing land or a knockdown");
@@ -97,18 +97,18 @@ try {
         pz = -pz;
       }
       const downSide = layout.knockdownSide || (layout.a.mode === "down" ? "a" : layout.b.mode === "down" ? "b" : null);
-      const focus = downSide ? { x: (layout[downSide].pos.x * 0.65 + mx * 0.35), z: (layout[downSide].pos.z * 0.65 + mz * 0.35) } : { x: mx, z: mz };
-      let dist = downSide ? 3.15 : 2.75;
+      const focus = downSide ? { x: (layout[downSide].pos.x + mx) / 2, z: (layout[downSide].pos.z + mz) / 2 } : { x: mx, z: mz };
+      let dist = downSide ? 3.6 : 3.25;
       let camX = focus.x + px * dist;
       let camZ = focus.z + pz * dist;
-      while ((Math.abs(camX) > 2.4 || Math.abs(camZ) > 2.4) && dist > 1.9) {
+      while ((Math.abs(camX) > 2.45 || Math.abs(camZ) > 2.45) && dist > 2.3) {
         dist -= 0.1;
         camX = focus.x + px * dist;
         camZ = focus.z + pz * dist;
       }
       arena.camLock = {
-        pos: [camX, downSide ? 1.82 : 1.64, camZ],
-        look: [focus.x, downSide ? 1.28 : 1.95, focus.z],
+        pos: [camX, downSide ? 2.15 : 1.95, camZ],
+        look: [focus.x, downSide ? 1.4 : 1.62, focus.z],
       };
     }, T);
   }
@@ -139,7 +139,7 @@ try {
   const raw = await video.path();
   const out = path.join(proof, "phase2-demo.webm");
   // The recording includes the fight setup. Keep the scrub, which is the last `seconds` of the file.
-  execFileSync("ffmpeg", ["-y", "-sseof", `-${(seconds + 0.4).toFixed(2)}`, "-i", raw, "-c", "copy", out], { stdio: "inherit" });
+  execFileSync("ffmpeg", ["-y", "-ss", "3.5", "-i", raw, "-c:v", "libvpx-vp9", "-b:v", "750k", "-deadline", "good", "-cpu-used", "4", "-an", out], { stdio: "inherit" });
   fs.rmSync(path.join(proof, "phase2-tmp"), { recursive: true, force: true });
   const dur = execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", out], { encoding: "utf8" }).trim();
   console.log("wrote", out, fs.statSync(out).size, "duration", dur);

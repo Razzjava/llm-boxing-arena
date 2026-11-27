@@ -74,8 +74,8 @@ export function knockdownPose(t: number): FallShape {
   const k = Math.max(0, t);
   return {
     knee: smooth(clamp01(k / 0.28)),
-    drop: 0.56 * smooth(clamp01((k - 0.08) / 0.48)),
-    back: 1.35 * smooth(clamp01((k - 0.34) / 0.48)),
+    drop: 0.34 * smooth(clamp01((k - 0.08) / 0.48)),
+    back: 0.95 * smooth(clamp01((k - 0.34) / 0.48)),
     limp: smooth(clamp01((k - 0.04) / 0.32)),
   };
 }
@@ -84,8 +84,8 @@ export function knockdownPose(t: number): FallShape {
 export function risePose(t: number): FallShape {
   const k = Math.max(0, t);
   return {
-    back: 1.35 * (1 - smooth(clamp01(k / 0.7))),
-    drop: 0.56 * (1 - smooth(clamp01((k - 0.3) / 1.15))),
+    back: 0.95 * (1 - smooth(clamp01(k / 0.7))),
+    drop: 0.34 * (1 - smooth(clamp01((k - 0.3) / 1.15))),
     knee: 1 - smooth(clamp01((k - 0.45) / 1.15)),
     limp: 1 - smooth(clamp01(k / 0.75)),
   };
@@ -120,6 +120,29 @@ export function footCycle(T: number, side: Side, foot: "L" | "R"): { swing: numb
   return { swing: lifted ? smooth((phase - 0.58) / 0.42) : 0, lifted };
 }
 
+/** Bones that have to stay on or above the canvas while someone is down. */
+export const FLOOR_BONES: BoneKey[] = [
+  "hips", "abdomen", "torso", "neck", "head",
+  "upperLegL", "lowerLegL", "footL", "upperLegR", "lowerLegR", "footR",
+  "upperL", "lowerL", "fistL", "upperR", "lowerR", "fistR",
+];
+export const FLOOR_EPSILON = 0.02;
+
+/** Raise the root so the lowest of those bones rests on the floor instead of sinking through it. */
+export function liftAboveFloor(rig: CharacterRig, floor = CANVAS_Y) {
+  rig.root.updateMatrixWorld(true);
+  let minY = Infinity;
+  for (const key of FLOOR_BONES) {
+    const bone = rig.bones[key];
+    if (!bone) continue;
+    minY = Math.min(minY, bone.getWorldPosition(new THREE.Vector3()).y);
+  }
+  if (minY < floor) {
+    rig.root.position.y += floor - minY;
+    rig.root.updateMatrixWorld(true);
+  }
+}
+
 function buckle(rig: CharacterRig, yaw: number, shape: FallShape) {
   if (shape.knee < 0.02 && shape.limp < 0.02) return;
   const { left } = frameOf(yaw);
@@ -132,8 +155,8 @@ function buckle(rig: CharacterRig, yaw: number, shape: FallShape) {
   for (const hand of ["L", "R"] as const) {
     const upper = hand === "L" ? rig.bones.upperL : rig.bones.upperR;
     const lower = hand === "L" ? rig.bones.lowerL : rig.bones.lowerR;
-    rotateWorldAxis(upper, left, 1.05 * shape.limp);
-    rotateWorldAxis(lower, left, 0.45 * shape.limp);
+    rotateWorldAxis(upper, left, 0.45 * shape.limp);
+    rotateWorldAxis(lower, left, 0.2 * shape.limp);
   }
 }
 
@@ -585,6 +608,11 @@ export function poseFightersAt(
     const mine = impact && impact.attacker === side ? impact : null;
     const hand = mine && act[side].punch ? punchingHand(lead[side], act[side].punch!.hand) : null;
     paintFlash(rigs[side], hand, mine ? flashIntensity(mine.age, mine.damage) : 0);
+  }
+
+  for (const side of ["a", "b"] as const) {
+    const mode = layout[side].mode;
+    if (mode === "down" || mode === "rising" || mode === "sit" || mode === "defeated") liftAboveFloor(rigs[side]);
   }
 
   const sweat: PoseSample["sweat"] = [];

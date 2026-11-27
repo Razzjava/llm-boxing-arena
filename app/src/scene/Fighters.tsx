@@ -83,10 +83,7 @@ export function Fighters({ tl, store, quality }: { tl: Timeline; store: Playback
     const look = (side: Side, build: BoxerBuild): Look => ({ ...CORNER_COLORS[side], ...bodyFor(build) });
     return {
       a: new CharacterRig(boxer.scene, boxer.animations, look("a", buildA)),
-      b: new CharacterRig(boxerB.scene, boxerB.animations, {
-        ...look("b", buildB),
-        colors: { Shirt: "#102a66", Pants: CORNER_COLORS.b.trunks, Belt: "#0a0a0a", Face: CORNER_COLORS.b.skin, Hair: "#1b120c" },
-      }),
+      b: new CharacterRig(boxerB.scene, boxerB.animations, { ...look("b", buildB), bare: true }),
       ref: new CharacterRig(referee.scene, referee.animations, {
         skin: "#d9a982",
         colors: { Shirt: "#e9eef5", Pants: "#15161a", Belt: "#0a0a0a", Hair: "#2b2118" },

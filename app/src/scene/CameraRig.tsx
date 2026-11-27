@@ -23,6 +23,19 @@ export function autoCamera(tl: Timeline, T: number, layout: Layout, replaying: b
   return (["wide", "shoulder", "wide", "ringside", "shoulder"] as const)[seg.index % 5] as CameraId;
 }
 
+/** Push a close camera out until it is clear of both fighters. */
+function clearBodies(pos: THREE.Vector3, layout: Layout, min = 1.35) {
+  for (const side of ["a", "b"] as const) {
+    const p = layout[side].pos;
+    const dx = pos.x - p.x;
+    const dz = pos.z - p.z;
+    const dist = Math.hypot(dx, dz);
+    if (dist >= min || dist < 1e-4) continue;
+    pos.x = p.x + (dx / dist) * min;
+    pos.z = p.z + (dz / dist) * min;
+  }
+}
+
 function shot(tl: Timeline, id: ShotId, layout: Layout, T: number): { pos: THREE.Vector3; look: THREE.Vector3 } {
   const f = layout.focus;
   const down = layout.knockdownSide;
@@ -44,9 +57,11 @@ function shot(tl: Timeline, id: ShotId, layout: Layout, T: number): { pos: THREE
       const r = layout.ref.pos;
       const toRef = new THREE.Vector2(r.x - f.x, r.z - f.z);
       if (toRef.dot(perp) > 0.2) perp = perp.multiplyScalar(-1);
+      const pos = new THREE.Vector3(f.x + perp.x * dist, CANVAS_Y + (down ? 1.85 : close ? 1.55 : 1.6), f.z + perp.y * dist);
+      if (close) clearBodies(pos, layout);
       return {
-        pos: new THREE.Vector3(f.x + perp.x * dist, CANVAS_Y + (down ? 1.85 : close ? 1.45 : 1.6), f.z + perp.y * dist),
-        look: new THREE.Vector3(f.x, CANVAS_Y + (down ? 0.75 : close ? 1.2 : 1.05), f.z),
+        pos,
+        look: new THREE.Vector3(f.x, CANVAS_Y + (down ? 0.9 : close ? 1.35 : 1.05), f.z),
       };
     }
     case "shoulder": {
@@ -58,7 +73,8 @@ function shot(tl: Timeline, id: ShotId, layout: Layout, T: number): { pos: THREE
       const aside = close ? 0.85 : 1.8;
       const up = close ? 1.65 : 3.0;
       const pos = new THREE.Vector3(a.pos.x, CANVAS_Y + up, a.pos.z).addScaledVector(fwd, -back).addScaledVector(right, aside);
-      const mid = new THREE.Vector3((a.pos.x + layout.b.pos.x * 2) / 3, CANVAS_Y + (close ? 1.2 : 1.05), (a.pos.z + layout.b.pos.z * 2) / 3);
+      if (close) clearBodies(pos, layout, 1.5);
+      const mid = new THREE.Vector3((a.pos.x + layout.b.pos.x * 2) / 3, CANVAS_Y + (close ? 1.35 : 1.05), (a.pos.z + layout.b.pos.z * 2) / 3);
       return { pos, look: mid };
     }
     case "raise": {
@@ -71,7 +87,7 @@ function shot(tl: Timeline, id: ShotId, layout: Layout, T: number): { pos: THREE
     case "replay": {
       // A knockdown punch pulls the orbit in. The radius is a function of fight time and the log.
       const tight = replayTight(tl.knockdowns, T);
-      const radius = tight ? 2.25 : 3.9;
+      const radius = tight ? 2.6 : 3.9;
       const mx = (layout.a.pos.x + layout.b.pos.x) / 2;
       const mz = (layout.a.pos.z + layout.b.pos.z) / 2;
       const ang = T * 0.3;
