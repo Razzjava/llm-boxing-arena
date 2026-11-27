@@ -225,6 +225,28 @@ export function sweatDrops(age: number, damage: number): SweatDrop[] {
   return drops;
 }
 
+/**
+ * Ringside or shoulder for a short beat around a hard land.
+ * The choice is a function of the logged time, so a replay cuts the same way.
+ */
+export function closeupAt(seg: Segment | null, T: number): "ringside" | "shoulder" | null {
+  if (!seg || seg.kind !== "exchange") return null;
+  let best: { at: number; damage: number } | null = null;
+  for (const { T: t, e } of seg.events) {
+    if (e.type !== "land" || e.damage < HARD_LAND) continue;
+    const age = T - t;
+    if (age < -0.08 || age > 0.6) continue;
+    if (!best || e.damage > best.damage) best = { at: t, damage: e.damage };
+  }
+  if (!best) return null;
+  return Math.round(best.at * 10) % 2 === 0 ? "ringside" : "shoulder";
+}
+
+/** True while a replay should orbit the knockdown punch instead of the whole ring. */
+export function replayTight(knockdowns: { T: number }[], T: number): boolean {
+  return knockdowns.some((k) => T >= k.T - 0.85 && T <= k.T + 1.15);
+}
+
 /** Most recent hard land whose sweat or flash is still in the air, if any. */
 export function hardImpactAt(seg: Segment | null, T: number): { age: number; damage: number; attacker: Side; target: "head" | "body" } | null {
   if (!seg || seg.kind !== "exchange") return null;

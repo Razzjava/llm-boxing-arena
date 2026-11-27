@@ -24,6 +24,8 @@ export interface Look {
   trim?: string;
   gloves?: string;
   boots?: string;
+  /** Paint the casual shirt, pants and belt as skin so the torso reads as a bare chest. */
+  bare?: boolean;
   /** Width multiplier from stats. */
   bulk?: number;
   scale?: number;
@@ -71,8 +73,10 @@ export class CharacterRig {
         mesh.frustumCulled = false; // skinned bounds don't follow the bones
         const mats = (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).map((m) => {
           const src = m as THREE.MeshStandardMaterial;
-          const color = src.name === "Skin" ? look.skin : look.colors?.[src.name];
-          const mat = new THREE.MeshStandardMaterial({ name: src.name, color: color ?? src.color, roughness: src.name === "Skin" ? 0.6 : 0.8, metalness: 0 });
+          const cloth = src.name === "Shirt" || src.name === "Pants" || src.name === "Belt" || src.name === "Hair" || src.name === "Face";
+          const skinTone = src.name === "Skin" || (look.bare && cloth);
+          const color = skinTone ? look.skin : look.colors?.[src.name];
+          const mat = new THREE.MeshStandardMaterial({ name: src.name, color: color ?? src.color, roughness: skinTone ? 0.6 : 0.8, metalness: 0 });
           return mat;
         });
         mesh.material = Array.isArray(mesh.material) ? mats : (mats[0] as THREE.Material);
@@ -149,12 +153,14 @@ export class CharacterRig {
       const hips = p("hips");
       const legL = p("upperLegL");
       const legR = p("upperLegR");
+      const waistY = (hips.y + legL.y) / 2 - 0.02;
       const waist = new THREE.Mesh(new THREE.CylinderGeometry(0.175, 0.18, 0.2, 20), mat(look.trunks, 0.55));
-      waist.position.set(hips.x, (hips.y + legL.y) / 2 - 0.02, hips.z);
+      waist.position.set(hips.x, waistY, hips.z);
       waist.scale.set(1, 1, 0.82);
       attach("hips", waist);
       const band = new THREE.Mesh(new THREE.CylinderGeometry(0.182, 0.182, 0.045, 20), mat(look.trim ?? "#ffffff", 0.4));
-      band.position.set(hips.x, waist.position.y + 0.1, hips.z);
+      // attach() rewrites the waist mesh position into bone-local space, so the band keeps the world height.
+      band.position.set(hips.x, waistY + 0.1, hips.z);
       band.scale.set(1, 1, 0.82);
       attach("hips", band);
       for (const [leg, knee, key] of [[legL, p("lowerLegL"), "upperLegL"], [legR, p("lowerLegR"), "upperLegR"]] as const) {

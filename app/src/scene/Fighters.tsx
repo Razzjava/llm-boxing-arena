@@ -13,6 +13,7 @@ import { frameOf, placeRoot, poseFightersAt } from "./pose";
 import { BASE_SCALE, CharacterRig, rotateWorldAxis, solveTwoBone, type Look } from "./rig";
 
 export const BOXER_URL = "/assets/boxer.glb";
+export const BOXER_B_URL = "/assets/boxer-b.glb";
 export const REFEREE_URL = "/assets/referee.glb";
 
 export const CORNER_COLORS: Record<Side, { trunks: string; gloves: string; trim: string; skin: string; boots: string }> = {
@@ -74,6 +75,7 @@ function driveReferee(rig: CharacterRig, layout: Layout, boxers: Record<Side, Ch
 
 export function Fighters({ tl, store, quality }: { tl: Timeline; store: PlaybackStore; quality: "high" | "low" }) {
   const boxer = useArenaGLTF(BOXER_URL);
+  const boxerB = useArenaGLTF(BOXER_B_URL);
   const referee = useArenaGLTF(REFEREE_URL);
   const { a: buildA, b: buildB } = tl.log.builds;
 
@@ -81,7 +83,7 @@ export function Fighters({ tl, store, quality }: { tl: Timeline; store: Playback
     const look = (side: Side, build: BoxerBuild): Look => ({ ...CORNER_COLORS[side], ...bodyFor(build) });
     return {
       a: new CharacterRig(boxer.scene, boxer.animations, look("a", buildA)),
-      b: new CharacterRig(boxer.scene, boxer.animations, look("b", buildB)),
+      b: new CharacterRig(boxerB.scene, boxerB.animations, { ...look("b", buildB), bare: true }),
       ref: new CharacterRig(referee.scene, referee.animations, {
         skin: "#d9a982",
         colors: { Shirt: "#e9eef5", Pants: "#15161a", Belt: "#0a0a0a", Hair: "#2b2118" },
@@ -89,7 +91,7 @@ export function Fighters({ tl, store, quality }: { tl: Timeline; store: Playback
         scale: BASE_SCALE * 0.97,
       }),
     };
-  }, [boxer, referee, buildA, buildB]);
+  }, [boxer, boxerB, referee, buildA, buildB]);
 
   const sweat = useMemo(() => {
     const group = new THREE.Group();

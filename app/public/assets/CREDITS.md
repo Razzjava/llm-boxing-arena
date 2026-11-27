@@ -1,5 +1,5 @@
 # Asset credits (all CC0 1.0)
-- boxer.glb, referee.glb: Quaternius, Ultimate Animated Character Pack (Nov 2019), BaseCharacter / Casual_Male. https://opengameart.org/content/animated-characters-pack (CC0). Converted FBX -> GLB with three.js FBXLoader + GLTFExporter.
+- boxer.glb, boxer-b.glb, referee.glb: Quaternius, Ultimate Animated Character Pack (Nov 2019). boxer.glb is BaseCharacter, boxer-b.glb is Casual_Bald (same skeleton, different body), referee.glb is Casual_Male. https://opengameart.org/content/animated-characters-pack (CC0). Converted FBX -> GLB with three.js FBXLoader + GLTFExporter.
 - ring.glb: tevy.dev Boxing Ring v1, https://tevy.dev/models/boxing-ring (CC0-1.0)
 - stool.glb: tevy.dev Boxing Corner Stool v1, https://tevy.dev/models/boxing-corner-stool (CC0-1.0)
 - crowd.glb: tevy.dev Grandstand Crowd v1, https://tevy.dev/models/grandstand-crowd (CC0-1.0)

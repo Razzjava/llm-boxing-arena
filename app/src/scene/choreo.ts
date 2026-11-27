@@ -237,15 +237,96 @@ function distanceAt(tl: Timeline, T: number): number {
   return sum / 5;
 }
 
-/** Both boxers in the open ring: a slowly drifting centre and axis, distance from what they're doing. */
-export function fightSpots(tl: Timeline, T: number): { a: Vec2; b: Vec2; axis: Vec2; mid: Vec2 } {
-  const mid = { x: 1.0 * Math.sin(0.043 * T) + 0.25 * Math.sin(0.13 * T), z: 0.85 * Math.sin(0.031 * T + 1.3) };
-  const ang = 0.7 * Math.sin(0.019 * T) + 0.3 * Math.sin(0.061 * T);
+const BOXING: ReadonlySet<string> = new Set(["jab", "cross", "hook", "uppercut", "body"]);
+const CIRCLE_RATE = 0.12;
+
+function isBoxing(action: Action | null): boolean {
+  return action !== null && BOXING.has(action);
+}
+
+/** Seconds in [from, to] when both fighters are throwing, not moving or holding. */
+function boxingSeconds(seg: Segment, from: number, to: number): number {
+  if (seg.kind !== "exchange" || to <= from) return 0;
+  const info = segInfo(seg);
+  const windows = (side: Side) => info.windows[side].filter((w) => isBoxing(w.action));
+  let total = 0;
+  for (const wa of windows("a")) {
+    for (const wb of windows("b")) {
+      const start = Math.max(from, wa.start, wb.start);
+      const end = Math.min(to, wa.end, wb.end);
+      if (end > start) total += end - start;
+    }
+  }
+  return total;
+}
+
+const circlePrefix = new WeakMap<Timeline, number[]>();
+
+/** Extra orbit while both are boxing. A pure integral of the log, so a replay traces the same circle. */
+export function circleAngle(tl: Timeline, T: number): number {
+  let prefix = circlePrefix.get(tl);
+  if (!prefix) {
+    prefix = [];
+    let acc = 0;
+    for (const seg of tl.segments) {
+      prefix.push(acc);
+      if (seg.kind === "exchange") acc += boxingSeconds(seg, seg.start, seg.start + seg.duration) * CIRCLE_RATE;
+    }
+    circlePrefix.set(tl, prefix);
+  }
+  const seg = segmentAt(tl, T);
+  const base = prefix[seg.index] ?? 0;
+  if (seg.kind !== "exchange") return base;
+  return base + boxingSeconds(seg, seg.start, Math.min(T, seg.start + seg.duration)) * CIRCLE_RATE;
+}
+
+/** +1 pushes the pair toward B (the positive axis) because A is the one giving ground. */
+function trailerDir(tl: Timeline, T: number): number {
+  const seg = segmentAt(tl, T);
+  if (seg.kind !== "exchange" || clinchedAt(seg, T)) return 0;
+  const a = actionAt(seg, "a", T);
+  const b = actionAt(seg, "b", T);
+  if (a === "move" && isBoxing(b)) return -1;
+  if (b === "move" && isBoxing(a)) return 1;
+  return 0;
+}
+
+/** Smoothed metres to slide the pair so the fighter giving ground is the one who meets the ropes. */
+export function trailerShift(tl: Timeline, T: number): number {
+  let sum = 0;
+  for (let k = -2; k <= 2; k++) sum += trailerDir(tl, T + k * 0.45);
+  return (sum / 5) * 1.45;
+}
+
+const STEP_PERIOD = 0.7;
+
+function rawSpots(tl: Timeline, T: number): { a: Vec2; b: Vec2; axis: Vec2; mid: Vec2 } {
+  const drift = { x: 1.0 * Math.sin(0.043 * T) + 0.25 * Math.sin(0.13 * T), z: 0.85 * Math.sin(0.031 * T + 1.3) };
+  const ang = 0.7 * Math.sin(0.019 * T) + 0.3 * Math.sin(0.061 * T) + circleAngle(tl, T);
   const axis = { x: Math.cos(ang), z: Math.sin(ang) };
+  const shift = trailerShift(tl, T);
+  const mid = { x: drift.x + axis.x * shift, z: drift.z + axis.z * shift };
   const d = distanceAt(tl, T);
   const a = { x: mid.x - (axis.x * d) / 2, z: mid.z - (axis.z * d) / 2 };
   const b = { x: mid.x + (axis.x * d) / 2, z: mid.z + (axis.z * d) / 2 };
   return { a: keepIn(a), b: keepIn(b), axis, mid };
+}
+
+/** Hold the spot, then step to the next one. Opposite fighters step on opposite halves of the beat. */
+function planted(tl: Timeline, side: "a" | "b", T: number): Vec2 {
+  const salt = side === "b" ? 0.5 : 0;
+  const phase = ((T / STEP_PERIOD + salt) % 1 + 1) % 1;
+  const plantT = Math.max(0, T - phase * STEP_PERIOD);
+  const from = rawSpots(tl, plantT)[side];
+  const to = rawSpots(tl, plantT + STEP_PERIOD)[side];
+  const swing = phase > 0.62 ? smooth((phase - 0.62) / 0.38) : 0;
+  return keepIn({ x: from.x + (to.x - from.x) * swing, z: from.z + (to.z - from.z) * swing });
+}
+
+/** Both boxers in the open ring: a drifting centre, a circle while they trade, distance from what they're doing. */
+export function fightSpots(tl: Timeline, T: number): { a: Vec2; b: Vec2; axis: Vec2; mid: Vec2 } {
+  const raw = rawSpots(tl, T);
+  return { a: planted(tl, "a", T), b: planted(tl, "b", T), axis: raw.axis, mid: raw.mid };
 }
 
 const keepIn = (p: Vec2): Vec2 => ({ x: clamp(p.x, -RING_HALF, RING_HALF), z: clamp(p.z, -RING_HALF, RING_HALF) });

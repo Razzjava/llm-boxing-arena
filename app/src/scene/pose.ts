@@ -56,18 +56,108 @@ export function placeRoot(rig: CharacterRig, p: { pos: { x: number; z: number };
   rig.root.rotation.set(0, p.yaw, 0);
 }
 
+export interface FallShape {
+  /** Hip drop, metres. */
+  drop: number;
+  /** Tip backward, radians. Starts only after the knees have buckled. */
+  back: number;
+  /** 0..1 knee bend. */
+  knee: number;
+  /** 0..1 arms hanging. */
+  limp: number;
+}
+
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+
+/** Knees buckle, hips drop, then the body tips. Arms go limp with the buckle. */
+export function knockdownPose(t: number): FallShape {
+  const k = Math.max(0, t);
+  return {
+    knee: smooth(clamp01(k / 0.28)),
+    drop: 0.34 * smooth(clamp01((k - 0.08) / 0.48)),
+    back: 0.95 * smooth(clamp01((k - 0.34) / 0.48)),
+    limp: smooth(clamp01((k - 0.04) / 0.32)),
+  };
+}
+
+/** Un-tip, then straighten into the stand-up clip. */
+export function risePose(t: number): FallShape {
+  const k = Math.max(0, t);
+  return {
+    back: 0.95 * (1 - smooth(clamp01(k / 0.7))),
+    drop: 0.34 * (1 - smooth(clamp01((k - 0.3) / 1.15))),
+    knee: 1 - smooth(clamp01((k - 0.45) / 1.15)),
+    limp: 1 - smooth(clamp01(k / 0.75)),
+  };
+}
+
 /** How far the body has dropped and tipped back for a knockdown. */
 export function fallPose(pose: BoxerPose): { drop: number; back: number } {
-  const SIT_DROP = 0.42;
   if (pose.mode === "down") {
-    const t = pose.modeTime;
-    return { drop: SIT_DROP * smooth(t / 0.55), back: 1.35 * smooth((t - 0.3) / 0.6) };
+    const k = knockdownPose(pose.modeTime);
+    return { drop: k.drop, back: k.back };
   }
   if (pose.mode === "rising") {
-    const t = pose.modeTime;
-    return { drop: SIT_DROP * (1 - smooth((t - 0.7) / 1.3)), back: 1.35 * (1 - smooth(t / 0.7)) };
+    const k = risePose(pose.modeTime);
+    return { drop: k.drop, back: k.back };
   }
   return { drop: 0, back: 0 };
+}
+
+function fallShape(pose: BoxerPose): FallShape {
+  if (pose.mode === "down") return knockdownPose(pose.modeTime);
+  if (pose.mode === "rising") return risePose(pose.modeTime);
+  return { drop: 0, back: 0, knee: 0, limp: 0 };
+}
+
+const STEP_PERIOD = 0.62;
+
+/** One step of the plant-step-plant cycle. Opposite feet are half a period apart. */
+export function footCycle(T: number, side: Side, foot: "L" | "R"): { swing: number; lifted: boolean } {
+  const offset = (foot === "L" ? 0 : 0.5) + (side === "b" ? 0.27 : 0);
+  const phase = ((T / STEP_PERIOD + offset) % 1 + 1) % 1;
+  const lifted = phase > 0.58;
+  return { swing: lifted ? smooth((phase - 0.58) / 0.42) : 0, lifted };
+}
+
+/** Bones that have to stay on or above the canvas while someone is down. */
+export const FLOOR_BONES: BoneKey[] = [
+  "hips", "abdomen", "torso", "neck", "head",
+  "upperLegL", "lowerLegL", "footL", "upperLegR", "lowerLegR", "footR",
+  "upperL", "lowerL", "fistL", "upperR", "lowerR", "fistR",
+];
+export const FLOOR_EPSILON = 0.02;
+
+/** Raise the root so the lowest of those bones rests on the floor instead of sinking through it. */
+export function liftAboveFloor(rig: CharacterRig, floor = CANVAS_Y) {
+  rig.root.updateMatrixWorld(true);
+  let minY = Infinity;
+  for (const key of FLOOR_BONES) {
+    const bone = rig.bones[key];
+    if (!bone) continue;
+    minY = Math.min(minY, bone.getWorldPosition(new THREE.Vector3()).y);
+  }
+  if (minY < floor) {
+    rig.root.position.y += floor - minY;
+    rig.root.updateMatrixWorld(true);
+  }
+}
+
+function buckle(rig: CharacterRig, yaw: number, shape: FallShape) {
+  if (shape.knee < 0.02 && shape.limp < 0.02) return;
+  const { left } = frameOf(yaw);
+  for (const foot of ["L", "R"] as const) {
+    const upper = foot === "L" ? rig.bones.upperLegL : rig.bones.upperLegR;
+    const lower = foot === "L" ? rig.bones.lowerLegL : rig.bones.lowerLegR;
+    rotateWorldAxis(upper, left, 0.95 * shape.knee);
+    rotateWorldAxis(lower, left, -1.55 * shape.knee);
+  }
+  for (const hand of ["L", "R"] as const) {
+    const upper = hand === "L" ? rig.bones.upperL : rig.bones.upperR;
+    const lower = hand === "L" ? rig.bones.lowerL : rig.bones.lowerR;
+    rotateWorldAxis(upper, left, 0.45 * shape.limp);
+    rotateWorldAxis(lower, left, 0.2 * shape.limp);
+  }
 }
 
 const loop = (t: number, d: number) => ((t % d) + d) % d;
@@ -77,8 +167,14 @@ function boxerClips(rig: CharacterRig, pose: BoxerPose, act: ArmActivity, T: num
   switch (pose.mode) {
     case "walk":
       return { Walk: { time: loop(T * 1.5, d("Walk")), weight: 1 } };
-    case "down":
-      return { SitDown: { time: smooth(pose.modeTime / 0.55) * d("SitDown"), weight: 1 } };
+    case "down": {
+      // The sit clip arrives after the knees have buckled, then the hip tip takes over.
+      const sit = smooth(clamp01((pose.modeTime - 0.22) / 0.5));
+      return {
+        SitDown: { time: sit * d("SitDown"), weight: sit },
+        Idle: { time: 0, weight: 1 - sit },
+      };
+    }
     case "defeated":
       return { Defeat: { time: Math.min(1, Math.max(0, pose.modeTime) / 2) * d("Defeat"), weight: 1 } };
     case "rising":
@@ -314,6 +410,7 @@ export function poseFightersAt(
     const fall = fallPose(pose);
     rig.setFall(fall.drop, fall.back);
     rig.pose(boxerClips(rig, pose, act[side], T));
+    buckle(rig, pose.yaw, fallShape(pose));
     rig.root.updateMatrixWorld(true);
     const { fwd, left } = frameOf(pose.yaw);
     const b = rig.bones;
@@ -330,6 +427,10 @@ export function poseFightersAt(
           const twist = (punch.punch === "hook" ? 0.45 : punch.punch === "jab" ? 0.15 : 0.35) * punch.ext;
           rotateWorldAxis(b.torso, UP, bone === "R" ? twist : -twist);
           rotateWorldAxis(b.abdomen, left, (punch.target === "body" ? 0.28 : 0.1) * punch.ext);
+        }
+        if (act[side].clinch) {
+          rotateWorldAxis(b.abdomen, left, 0.28);
+          rotateWorldAxis(b.torso, left, 0.12);
         }
         if (hurt[side]) {
           rotateWorldAxis(b.hips, fwd, 0.1 * Math.sin(T * 3.1));
@@ -414,8 +515,8 @@ export function poseFightersAt(
     const wrist = wristFor(side, aimed.aim, aimed.bone, aimed.shoulder);
     bringWithinReach(aimed.attacker.rig, aimed.defender.rig, wrist, aimed.shoulder, false);
   }
-  // The lunge can leave the chests overlapping. Put the gap back, then let the arm cover it.
-  if (!bodies.a.act.clinch && !bodies.b.act.clinch) separateFighters(bodies.a.rig, bodies.b.rig);
+  // The lunge, and the lean into a clinch, can leave the chests overlapping. Put the gap back, then let the arms cover it.
+  separateFighters(bodies.a.rig, bodies.b.rig);
   for (let pass = 0; pass < 2; pass++) {
     for (const side of ["a", "b"] as const) {
       const settled = aimFor(side);
@@ -458,7 +559,8 @@ export function poseFightersAt(
     const sideVec = (hand: "L" | "R") => left.clone().multiplyScalar(hand === "L" ? 1 : -1);
     let ikWeight = fighting ? 1 : 0;
     if (pose.mode === "walk") ikWeight = 0.55;
-    if (pose.mode === "rising") ikWeight = smooth((pose.modeTime - 1.4) / 0.8);
+    if (pose.mode === "rising") ikWeight = smooth((pose.modeTime - 1.4) / 0.8) * (1 - fallShape(pose).limp);
+    if (pose.mode === "down") ikWeight = 0;
     if (pose.mode === "stand") ikWeight = pose.raised ? 1 : 0.4;
 
     const punching = punchOf(side) ? punchingHand(body.lead, punchOf(side)!.hand) : null;
@@ -506,6 +608,11 @@ export function poseFightersAt(
     const mine = impact && impact.attacker === side ? impact : null;
     const hand = mine && act[side].punch ? punchingHand(lead[side], act[side].punch!.hand) : null;
     paintFlash(rigs[side], hand, mine ? flashIntensity(mine.age, mine.damage) : 0);
+  }
+
+  for (const side of ["a", "b"] as const) {
+    const mode = layout[side].mode;
+    if (mode === "down" || mode === "rising" || mode === "sit" || mode === "defeated") liftAboveFloor(rigs[side]);
   }
 
   const sweat: PoseSample["sweat"] = [];

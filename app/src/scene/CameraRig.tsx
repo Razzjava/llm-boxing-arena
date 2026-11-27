@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { segmentAt, type Timeline } from "../playback/timeline";
 import type { PlaybackStore } from "../playback/store";
 import { CANVAS_Y, layoutAt, type Layout } from "./choreo";
-import { cameraKick } from "./impact";
+import { cameraKick, closeupAt, replayTight } from "./impact";
 
 export type CameraId = "wide" | "ringside" | "shoulder";
 type ShotId = CameraId | "replay" | "corner" | "raise";
@@ -18,10 +18,25 @@ export function autoCamera(tl: Timeline, T: number, layout: Layout, replaying: b
   if (seg.kind === "result" && layout.ref.raise) return "raise";
   if (seg.kind === "result" || layout.knockdownSide) return "ringside";
   if (seg.kind !== "exchange") return "wide";
+  const close = closeupAt(seg, T);
+  if (close) return close;
   return (["wide", "shoulder", "wide", "ringside", "shoulder"] as const)[seg.index % 5] as CameraId;
 }
 
-function shot(id: ShotId, layout: Layout, T: number): { pos: THREE.Vector3; look: THREE.Vector3 } {
+/** Push a close camera out until it is clear of both fighters. */
+function clearBodies(pos: THREE.Vector3, layout: Layout, min = 1.35) {
+  for (const side of ["a", "b"] as const) {
+    const p = layout[side].pos;
+    const dx = pos.x - p.x;
+    const dz = pos.z - p.z;
+    const dist = Math.hypot(dx, dz);
+    if (dist >= min || dist < 1e-4) continue;
+    pos.x = p.x + (dx / dist) * min;
+    pos.z = p.z + (dz / dist) * min;
+  }
+}
+
+function shot(tl: Timeline, id: ShotId, layout: Layout, T: number): { pos: THREE.Vector3; look: THREE.Vector3 } {
   const f = layout.focus;
   const down = layout.knockdownSide;
   switch (id) {
@@ -36,22 +51,30 @@ function shot(id: ShotId, layout: Layout, T: number): { pos: THREE.Vector3; look
       const axis = new THREE.Vector2(b.x - a.x, b.z - a.z).normalize();
       let perp = new THREE.Vector2(-axis.y, axis.x);
       if (perp.y < 0) perp = perp.multiplyScalar(-1); // prefer the broadcast (+z) side...
-      const dist = down ? 4.4 : 3.8;
+      const close = !down && closeupAt(segmentAt(tl, T), T) === "ringside";
+      const dist = down ? 4.4 : close ? 2.55 : 3.8;
       // ...but shoot from the side away from the referee so he doesn't block the view.
       const r = layout.ref.pos;
       const toRef = new THREE.Vector2(r.x - f.x, r.z - f.z);
       if (toRef.dot(perp) > 0.2) perp = perp.multiplyScalar(-1);
+      const pos = new THREE.Vector3(f.x + perp.x * dist, CANVAS_Y + (down ? 1.85 : close ? 1.55 : 1.6), f.z + perp.y * dist);
+      if (close) clearBodies(pos, layout);
       return {
-        pos: new THREE.Vector3(f.x + perp.x * dist, CANVAS_Y + (down ? 1.85 : 1.6), f.z + perp.y * dist),
-        look: new THREE.Vector3(f.x, CANVAS_Y + (down ? 0.75 : 1.05), f.z),
+        pos,
+        look: new THREE.Vector3(f.x, CANVAS_Y + (down ? 0.9 : close ? 1.35 : 1.05), f.z),
       };
     }
     case "shoulder": {
+      const close = closeupAt(segmentAt(tl, T), T) === "shoulder";
       const a = layout.a;
       const fwd = new THREE.Vector3(Math.sin(a.yaw), 0, Math.cos(a.yaw));
       const right = new THREE.Vector3(-Math.cos(a.yaw), 0, Math.sin(a.yaw));
-      const pos = new THREE.Vector3(a.pos.x, CANVAS_Y + 3.0, a.pos.z).addScaledVector(fwd, -3.0).addScaledVector(right, 1.8);
-      const mid = new THREE.Vector3((a.pos.x + layout.b.pos.x * 2) / 3, CANVAS_Y + 1.05, (a.pos.z + layout.b.pos.z * 2) / 3);
+      const back = close ? 1.65 : 3.0;
+      const aside = close ? 0.85 : 1.8;
+      const up = close ? 1.65 : 3.0;
+      const pos = new THREE.Vector3(a.pos.x, CANVAS_Y + up, a.pos.z).addScaledVector(fwd, -back).addScaledVector(right, aside);
+      if (close) clearBodies(pos, layout, 1.5);
+      const mid = new THREE.Vector3((a.pos.x + layout.b.pos.x * 2) / 3, CANVAS_Y + (close ? 1.35 : 1.05), (a.pos.z + layout.b.pos.z * 2) / 3);
       return { pos, look: mid };
     }
     case "raise": {
@@ -62,13 +85,15 @@ function shot(id: ShotId, layout: Layout, T: number): { pos: THREE.Vector3; look
       return { pos, look: new THREE.Vector3(r.pos.x, CANVAS_Y + 1.25, r.pos.z) };
     }
     case "replay": {
-      // Elevated slow orbit around both boxers so neither blocks the lens.
+      // A knockdown punch pulls the orbit in. The radius is a function of fight time and the log.
+      const tight = replayTight(tl.knockdowns, T);
+      const radius = tight ? 2.6 : 3.9;
       const mx = (layout.a.pos.x + layout.b.pos.x) / 2;
       const mz = (layout.a.pos.z + layout.b.pos.z) / 2;
       const ang = T * 0.3;
       return {
-        pos: new THREE.Vector3(mx + Math.sin(ang) * 3.9, CANVAS_Y + 2.6, mz + Math.cos(ang) * 3.9),
-        look: new THREE.Vector3(mx, CANVAS_Y + 0.75, mz),
+        pos: new THREE.Vector3(mx + Math.sin(ang) * radius, CANVAS_Y + (tight ? 1.45 : 2.6), mz + Math.cos(ang) * radius),
+        look: new THREE.Vector3(mx, CANVAS_Y + (tight ? 1.15 : 0.75), mz),
       };
     }
     default:
@@ -90,7 +115,7 @@ export function CameraRig({ tl, store, choice, onCamera }: { tl: Timeline; store
     }
     const layout = layoutAt(tl, store.T);
     const id: ShotId = choice === "auto" || store.replay ? autoCamera(tl, store.T, layout, !!store.replay) : choice;
-    const target = shot(id, layout, store.T);
+    const target = shot(tl, id, layout, store.T);
     const kick = cameraKick(segmentAt(tl, store.T), store.T);
     if (kick) {
       const from = layout[kick.attacker].pos;
