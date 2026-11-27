@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { acceptBuild, checkBuild } from "../src/boxer.js";
+import { acceptBuild, checkBuild, realPersonReason } from "../src/boxer.js";
+import { DEMO_BUILDS } from "../src/controllers.js";
 import { OUT } from "./helpers.js";
 
 describe("boxer builds", () => {
@@ -40,5 +41,46 @@ describe("boxer builds", () => {
       expect(n.build.stance).toBe(OUT.stance);
       expect(n.build.style).toBe(OUT.style);
     }
+  });
+
+  it("rejects real people and textbook personal names, and keeps stage names", () => {
+    const rejected = [
+      "Mike Tyson", "MIKE TYSON", "mike-tyson", "mike.tyson", "Tyson", "tyson.", "  TYSON  ",
+      "Ali", "ali", "Canelo", "Canelo!", "Canelo Álvarez", "Muhammad Ali", "mohammed ali",
+      "Saul Alvarez", "Floyd Mayweather", "Iron Mike", "Sugar Ray", "The Rock",
+      "Dr. Tyson", "Mike Tyson Jr.", "Mr. Mike Tyson", "John Smith", "jane doe", "Joe Bloggs",
+      "Tom Brady", "Taylor Swift", "LeBron James", "Donald Trump", "young Mike Tyson",
+    ];
+    for (const name of rejected) {
+      const cleaned = name.replace(/\s+/g, " ").trim().slice(0, 24);
+      const n = acceptBuild({ ...OUT, name, nickname: "The Ghost" });
+      expect(n.ok, name).toBe(false);
+      if (!n.ok) expect(n.reason).toBe(realPersonReason(cleaned));
+    }
+
+    const nickname = acceptBuild({ ...OUT, name: "The Ghost", nickname: "Ali" });
+    expect(nickname.ok).toBe(false);
+    if (!nickname.ok) expect(nickname.reason).toBe(realPersonReason("Ali"));
+
+    const nameFirst = acceptBuild({ ...OUT, name: "Mike Tyson", nickname: "Ali" });
+    expect(nameFirst.ok).toBe(false);
+    if (!nameFirst.ok) expect(nameFirst.reason).toBe(realPersonReason("Mike Tyson"));
+
+    const stage = ["The Ghost", "Iron Tide", "Silk", "Buzzsaw", "The Hammer", "The Kid", "Night Wolf", "The Fury", "Swift", "Jack Hammer", "Rocky", "Sugar"];
+    for (const name of stage) {
+      const n = acceptBuild({ ...OUT, name, nickname: "Iron Tide" });
+      expect(n.ok, name).toBe(true);
+      if (n.ok) expect(n.build.name).toBe(name);
+    }
+
+    for (const build of Object.values(DEMO_BUILDS)) {
+      expect(checkBuild(build), build.name).toEqual([]);
+      const n = acceptBuild(build);
+      expect(n.ok, build.name).toBe(true);
+      if (n.ok) expect(n.build).toEqual(build);
+    }
+
+    // Replay validation stays structural, so a stored personal name is not re-judged.
+    expect(checkBuild({ ...OUT, name: "Mike Tyson" })).toEqual([]);
   });
 });

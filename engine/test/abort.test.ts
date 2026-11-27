@@ -87,6 +87,51 @@ describe("a failed model step aborts the match", () => {
     expect(askedB).toBe(1);
   });
 
+  it("a real person's name aborts the boxer pick and does not ask anyone else", async () => {
+    const casings = ["Mike Tyson", "MIKE TYSON", "mike-tyson", "Tyson", "Ali", "Canelo!", "Muhammad Ali", "John Smith"];
+    for (const name of casings) {
+      let later = 0;
+      const outcome = await runFight(
+        () => ({ ...OUT, name }),
+        () => {
+          later++;
+          return SLUG;
+        },
+        () => {
+          later++;
+          return quiet({ phase: "exchange" } as FightStateView);
+        },
+        () => {
+          later++;
+          return quiet({ phase: "exchange" } as FightStateView);
+        },
+        4,
+      );
+      const abort = expectAbort(outcome, { side: "a", step: "boxer pick" });
+      expect(abort.reason).toMatch(/^used a real person's name \(".*"\); stage names only$/);
+      expect(abort.reason).toContain(name.replace(/\s+/g, " ").trim());
+      expect(later).toBe(0);
+    }
+
+    let blueAsked = 0;
+    const blue = await runFight(
+      OUT,
+      () => ({ ...SLUG, name: "Canelo", nickname: "The Ghost" }),
+      () => {
+        blueAsked++;
+        return quiet({ phase: "corner" } as FightStateView);
+      },
+      () => {
+        blueAsked++;
+        return quiet({ phase: "corner" } as FightStateView);
+      },
+      5,
+    );
+    const blueAbort = expectAbort(blue, { side: "b", step: "boxer pick" });
+    expect(blueAbort.reason).toBe('used a real person\'s name ("Canelo"); stage names only');
+    expect(blueAsked).toBe(0);
+  });
+
   it("a failed corner tactic aborts with the round and asks nobody else", async () => {
     const calls: string[] = [];
     const a: Controller = (view, signal) => {

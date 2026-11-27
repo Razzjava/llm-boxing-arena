@@ -91,6 +91,27 @@ describe("a failed model call returns to setup", () => {
     expect(posts).toHaveLength(1);
   });
 
+  it("stops at boxer pick when the model uses a real person's name and returns to setup", async () => {
+    let calls = 0;
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (String(url).includes("/models")) return json(MODELS);
+      calls += 1;
+      return chat(JSON.stringify({ ...JSON.parse(BUILD), name: "Mike Tyson", nickname: "Iron Mike" }));
+    }));
+
+    render(<App />);
+    fireEvent.change(screen.getByTestId("key-opencode"), { target: { value: SECRET } });
+    await chooseOpenCode("red", "red-fighter");
+    fireEvent.click(screen.getByTestId("start-fight"));
+
+    const alert = await screen.findByTestId("fight-error");
+    expect(alert.textContent).toBe('Red corner (OpenCode, red-fighter) failed at boxer pick: used a real person\'s name ("Mike Tyson"); stage names only');
+    expectBackOnSetup();
+    expect((screen.getByTestId("source-red") as HTMLSelectElement).value).toBe("opencode");
+    expect((screen.getByTestId("source-blue") as HTMLSelectElement).value).toBe("demo");
+    expect(calls).toBe(1);
+  });
+
   it("names the exchange when OpenCode returns an unusable action and stops there", async () => {
     let calls = 0;
     vi.stubGlobal("fetch", vi.fn(async (url: string) => {
