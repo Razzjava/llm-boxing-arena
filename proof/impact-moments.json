@@ -1,0 +1,30 @@
+[
+  {
+    "T": 104.5,
+    "type": "land",
+    "punch": "jab",
+    "damage": 0.5,
+    "target": "head"
+  },
+  {
+    "T": 40.7,
+    "type": "block",
+    "punch": "hook",
+    "damage": 0,
+    "target": "head"
+  },
+  {
+    "T": 291.87,
+    "type": "slip",
+    "punch": "cross",
+    "damage": 0,
+    "target": "head"
+  },
+  {
+    "T": 275.25,
+    "type": "land",
+    "punch": "uppercut",
+    "damage": 2.1,
+    "target": "head"
+  }
+]
