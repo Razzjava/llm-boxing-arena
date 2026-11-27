@@ -6,6 +6,7 @@ import type { Timeline } from "../playback/timeline";
 const SRC: Record<SoundCue, string> = {
   "punch-light": "/assets/sfx/punch-light.ogg",
   "punch-heavy": "/assets/sfx/punch-heavy.ogg",
+  block: "/assets/sfx/block.ogg",
   bell: "/assets/sfx/bell.ogg",
   roar: "/assets/sfx/crowd-roar.ogg",
   count: "/assets/sfx/count.ogg",
@@ -14,6 +15,7 @@ const SRC: Record<SoundCue, string> = {
 const GAIN: Record<SoundCue, number> = {
   "punch-light": 0.55,
   "punch-heavy": 0.85,
+  block: 0.6,
   bell: 0.7,
   roar: 0.95,
   count: 0.45,

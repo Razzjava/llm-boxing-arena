@@ -9,7 +9,7 @@ import { PlaybackStore, type Speed } from "../playback/store";
 import { Arena } from "../scene/Arena";
 import { Fighters } from "../scene/Fighters";
 import { CameraRig, type CameraChoice } from "../scene/CameraRig";
-import { rateFactorAt } from "../scene/choreo";
+import { layoutAt, rateFactorAt } from "../scene/choreo";
 import { Hud } from "./Hud";
 import { ResultCard } from "./ResultCard";
 import { AudioControls } from "./AudioControls";
@@ -89,7 +89,9 @@ export default function Watch({ fight, mode, onExit }: { fight: SavedFight; mode
   useEffect(() => {
     // Dev-only handle for poking at playback from the console. Holds no keys.
     // Read-only inspection/seek hook used by the Playwright proof run (holds no keys).
-    if (import.meta.env.DEV || new URLSearchParams(location.search).has("e2e")) (window as unknown as Record<string, unknown>).__arena = { store, tl };
+    if (import.meta.env.DEV || new URLSearchParams(location.search).has("e2e")) {
+      (window as unknown as Record<string, unknown>).__arena = { store, tl, layoutAt };
+    }
   }, [store, tl]);
 
   useEffect(() => {

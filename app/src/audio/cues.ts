@@ -3,7 +3,7 @@
 import type { Line } from "../playback/commentary";
 import type { Timeline } from "../playback/timeline";
 
-export type SoundCue = "punch-light" | "punch-heavy" | "bell" | "roar" | "count";
+export type SoundCue = "punch-light" | "punch-heavy" | "block" | "bell" | "roar" | "count";
 
 /** Fight-seconds. Wider than one frame at 4x, narrower than a skip-to-result. */
 export const CUE_GAP = 2.5;
@@ -21,6 +21,7 @@ export function cuesBetween(tl: Timeline, from: number, to: number): SoundCue[] 
       for (const { T, e } of seg.events) {
         if (!crossed(from, to, T)) continue;
         if (e.type === "land") cues.push(e.punch === "jab" || e.damage < 0.9 ? "punch-light" : "punch-heavy");
+        else if (e.type === "block") cues.push("block");
         else if (e.type === "knockdown") cues.push("roar");
         else if (e.type === "count") cues.push("count");
       }
@@ -39,7 +40,7 @@ export function limitCues(cues: SoundCue[]): SoundCue[] {
   let punches = 0;
   for (let i = cues.length - 1; i >= 0; i--) {
     const cue = cues[i] as SoundCue;
-    if (cue === "punch-light" || cue === "punch-heavy") {
+    if (cue === "punch-light" || cue === "punch-heavy" || cue === "block") {
       if (punches >= 2) continue;
       punches++;
     }

@@ -42,6 +42,8 @@ export class CharacterRig {
   readonly model: THREE.Object3D;
   private clips: Record<string, { duration: number; tracks: { node: THREE.Object3D; prop: "quaternion" | "position"; interp: THREE.Interpolant }[] }> = {};
   readonly bones = {} as Record<BoneKey, THREE.Bone>;
+  /** Procedural glove meshes, when this look asked for them. */
+  readonly gloves: Partial<Record<"L" | "R", THREE.Mesh>> = {};
   /** Length of upper arm + forearm in world metres (for IK reach). */
   armLength = 0.55;
   /** Bind pose of every bone. Reset each frame so hand-made rotations never accumulate on bones a clip doesn't animate. */
@@ -132,10 +134,12 @@ export class CharacterRig {
         const fist = p(`fist${side}`);
         const end = p(`fistEnd${side}`);
         const glove = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), mat(look.gloves, 0.35));
+        glove.name = `Glove${side}`;
         glove.scale.set(0.085, 0.11, 0.095);
         along(glove, fist, tmpV2.copy(end).sub(fist).multiplyScalar(0.9).add(fist));
         glove.scale.set(0.088, 0.105, 0.095);
         attach(`fist${side}`, glove);
+        this.gloves[side] = glove;
         const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.06, 0.07, 14), mat(look.trim ?? "#ffffff", 0.4));
         along(cuff, tmpV.copy(fist).lerp(end, -0.15), tmpV2.copy(fist).lerp(end, 0.12));
         attach(`fist${side}`, cuff);

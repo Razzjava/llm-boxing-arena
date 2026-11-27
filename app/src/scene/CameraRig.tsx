@@ -2,10 +2,10 @@
 import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import type { Timeline } from "../playback/timeline";
-import { segmentAt } from "../playback/timeline";
+import { segmentAt, type Timeline } from "../playback/timeline";
 import type { PlaybackStore } from "../playback/store";
 import { CANVAS_Y, layoutAt, type Layout } from "./choreo";
+import { cameraKick } from "./impact";
 
 export type CameraId = "wide" | "ringside" | "shoulder";
 type ShotId = CameraId | "replay" | "corner" | "raise";
@@ -81,9 +81,35 @@ export function CameraRig({ tl, store, choice, onCamera }: { tl: Timeline; store
   const last = useRef<string>("");
   const look = useRef(new THREE.Vector3());
   useFrame((_, dt) => {
+    const arena = (window as unknown as { __arena?: { camLock?: { pos: number[]; look: number[] } } }).__arena;
+    const lock = arena?.camLock;
+    if (lock) {
+      camera.position.set(lock.pos[0] ?? 0, lock.pos[1] ?? 0, lock.pos[2] ?? 0);
+      camera.lookAt(lock.look[0] ?? 0, lock.look[1] ?? 0, lock.look[2] ?? 0);
+      return;
+    }
     const layout = layoutAt(tl, store.T);
     const id: ShotId = choice === "auto" || store.replay ? autoCamera(tl, store.T, layout, !!store.replay) : choice;
     const target = shot(id, layout, store.T);
+    const kick = cameraKick(segmentAt(tl, store.T), store.T);
+    if (kick) {
+      const from = layout[kick.attacker].pos;
+      const to = layout[kick.attacker === "a" ? "b" : "a"].pos;
+      const ax = to.x - from.x;
+      const az = to.z - from.z;
+      const len = Math.hypot(ax, az) || 1;
+      const fx = ax / len;
+      const fz = az / len;
+      // Attacker's left of the punch line.
+      const lx = fz;
+      const lz = -fx;
+      target.pos.x += fx * kick.forward + lx * kick.lateral;
+      target.pos.y += kick.vertical;
+      target.pos.z += fz * kick.forward + lz * kick.lateral;
+      target.look.x += fx * kick.forward * 0.35;
+      target.look.y += kick.vertical * 0.4;
+      target.look.z += fz * kick.forward * 0.35;
+    }
     const cut = id !== last.current;
     const k = cut ? 1 : 1 - Math.exp(-dt * (id === "replay" ? 6 : 3));
     camera.position.lerp(target.pos, k);

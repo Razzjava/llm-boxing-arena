@@ -78,6 +78,7 @@ describe("fight audio cues", () => {
     expect(cues).toContain("bell");
     expect(cues).toContain("punch-light");
     expect(cues).toContain("punch-heavy");
+    expect(cues).toContain("block");
     expect(cues).toContain("roar");
     expect(cues).toContain("count");
     expect(cuesBetween(tl, 0, 30)).toEqual([]);

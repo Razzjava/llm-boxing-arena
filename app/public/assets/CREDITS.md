@@ -6,6 +6,7 @@
 - ../basis/basis_transcoder.*: from three.js examples/jsm/libs/basis (Apache-2.0)
 - sfx/punch-light.ogg: Kenney Impact Sounds, impactPunch_medium_000.ogg. https://kenney.nl/assets/impact-sounds (CC0). The pack has no lighter punch, so the medium punch hit is the jab.
 - sfx/punch-heavy.ogg: Kenney Impact Sounds, impactPunch_heavy_000.ogg. https://kenney.nl/assets/impact-sounds (CC0)
+- sfx/block.ogg: Kenney Impact Sounds, impactSoft_heavy_001.ogg. https://kenney.nl/assets/impact-sounds (CC0). The soft heavy impact is the block thud.
 - sfx/bell.ogg: Kenney Impact Sounds, impactBell_heavy_000.ogg. https://kenney.nl/assets/impact-sounds (CC0)
 - sfx/count.ogg: Kenney UI Audio, click1.ogg. https://kenney.nl/assets/ui-audio (CC0)
 - sfx/crowd-loop.ogg: trimmed from StarNinjas, Crowd Shouting/Speaking Ambience, crowd_shouting.ogg. https://opengameart.org/content/crowd-shoutingspeaking-ambience (CC0)

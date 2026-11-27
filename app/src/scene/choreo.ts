@@ -2,6 +2,7 @@
 // so playback, skipping and slow-mo replays all agree. The Boxer/Referee components turn this into bones.
 import type { Action, Punch, Side } from "@llm-boxing-arena/engine";
 import { segmentAt, type Segment, type Timeline, type TimedEvent } from "../playback/timeline";
+import { extensionAt, hardLandRate, landEnvelope, recoilEnvelope, slipEnvelope } from "./impact";
 
 export const CANVAS_Y = 1.0; // top of the tevy ring canvas
 export const RING_HALF = 2.75; // keep feet inside the ropes (ropes at 3.11)
@@ -66,15 +67,84 @@ const other = (s: Side): Side => (s === "a" ? "b" : "a");
 
 // ---------------------------------------------------------------- per-exchange caches
 export interface Window { action: Action; start: number; end: number }
+
+/** One thrown punch paired with the outcome the log actually recorded for it. */
+export interface ThrowInfo {
+  /** Fight time of the throw event. */
+  T: number;
+  /** Fight time of the land / block / slip / miss. Extension peaks here. */
+  peak: number;
+  attacker: Side;
+  punch: Punch;
+  hand: "lead" | "rear";
+  outcome: "land" | "block" | "slip" | "miss";
+  target: "head" | "body";
+  damage: number;
+}
+
+interface HitInfo {
+  T: number;
+  damage: number;
+  target: "head" | "body";
+  punch: Punch;
+  hand: "lead" | "rear";
+  attacker: Side;
+}
+
+interface SlipInfo {
+  T: number;
+  punch: Punch;
+  hand: "lead" | "rear";
+  attacker: Side;
+}
+
 interface SegInfo {
   windows: Record<Side, Window[]>;
-  throws: Record<Side, { T: number; punch: Punch; hand: "lead" | "rear"; outcome: string; target: "head" | "body" }[]>;
-  hits: Record<Side, { T: number; damage: number; target: "head" | "body"; punch: Punch }[]>; // hits TAKEN by side
-  slips: Record<Side, number[]>;
-  blocks: Record<Side, number[]>;
+  throws: Record<Side, ThrowInfo[]>;
+  hits: Record<Side, HitInfo[]>; // hits TAKEN by side
+  slips: Record<Side, SlipInfo[]>;
+  blocks: Record<Side, SlipInfo[]>;
   clinches: { start: number; end: number }[];
 }
 const cache = new WeakMap<Segment, SegInfo>();
+
+function pairThrows(ev: TimedEvent[]): ThrowInfo[] {
+  const used = new Set<number>();
+  const paired: ThrowInfo[] = [];
+  ev.forEach((item) => {
+    if (item.e.type !== "throw") return;
+    const th = item.e;
+    let best = -1;
+    let bestT = Infinity;
+    ev.forEach((cand, j) => {
+      if (used.has(j)) return;
+      const dt = cand.T - item.T;
+      if (dt <= 0 || dt > 0.45 || cand.T >= bestT) return;
+      const o = cand.e;
+      const matches =
+        ((o.type === "land" || o.type === "miss") && o.side === th.side && o.punch === th.punch) ||
+        ((o.type === "block" || o.type === "slip") && o.side !== th.side && o.punch === th.punch);
+      if (!matches) return;
+      best = j;
+      bestT = cand.T;
+    });
+    if (best < 0) return; // smothered, or cut off before it landed: nothing to extend to
+    used.add(best);
+    const o = ev[best]!.e;
+    if (o.type !== "land" && o.type !== "block" && o.type !== "slip" && o.type !== "miss") return;
+    paired.push({
+      T: item.T,
+      peak: ev[best]!.T,
+      attacker: th.side,
+      punch: th.punch,
+      hand: th.hand,
+      outcome: o.type,
+      target: o.type === "land" ? o.target : th.punch === "body" ? "body" : "head",
+      damage: o.type === "land" ? o.damage : 0,
+    });
+  });
+  return paired;
+}
 
 export function segInfo(seg: Segment): SegInfo {
   let info = cache.get(seg);
@@ -84,25 +154,28 @@ export function segInfo(seg: Segment): SegInfo {
     const ev = seg.events;
     for (const { T, e } of ev) {
       if (e.type === "action-start") info.windows[e.side].push({ action: e.action, start: T, end: T + e.duration });
-      if (e.type === "throw") {
-        const res = ev.find((x) => x.T > T && x.T <= T + 0.3 && "punch" in x.e && x.e.punch === e.punch && x.e.type !== "throw");
-        const outcome = res ? res.e.type : "miss";
-        info.throws[e.side].push({ T, punch: e.punch, hand: e.hand, outcome, target: e.punch === "body" ? "body" : "head" });
-      }
-      if (e.type === "land") info.hits[other(e.side)].push({ T, damage: e.damage, target: e.target, punch: e.punch });
-      if (e.type === "slip") info.slips[e.side].push(T);
-      if (e.type === "block") info.blocks[e.side].push(T);
-      if (e.type === "smothered" && e.side) {
-        // punches into a clinch: nothing to animate beyond the clinch itself
-      }
       if (e.type === "clinch") {
         const brk = ev.find((x) => x.T > T && x.e.type === "break");
         info.clinches.push({ start: T, end: brk ? brk.T : seg.start + seg.duration });
       }
     }
+    for (const th of pairThrows(ev)) {
+      info.throws[th.attacker].push(th);
+      const touch = { T: th.peak, punch: th.punch, hand: th.hand, attacker: th.attacker };
+      if (th.outcome === "land") {
+        info.hits[other(th.attacker)].push({ ...touch, damage: th.damage, target: th.target });
+      } else if (th.outcome === "slip") info.slips[other(th.attacker)].push(touch);
+      else if (th.outcome === "block") info.blocks[other(th.attacker)].push(touch);
+    }
   }
   cache.set(seg, info);
   return info;
+}
+
+/** Paired punches for tests and the pose. Empty outside an exchange. */
+export function throwsIn(seg: Segment): ThrowInfo[] {
+  const info = segInfo(seg);
+  return [...info.throws.a, ...info.throws.b];
 }
 
 export function actionAt(seg: Segment, side: Side, T: number): Action | null {
@@ -134,9 +207,13 @@ export function episodes(tl: Timeline): Episode[] {
   return eps;
 }
 
-/** Slow playback down around knockdowns so the fall, the count and the get-up read. */
+/**
+ * Playback rate at fight time T. Knockdowns halve it; a hard land dips it for a fraction of a second.
+ * This only scales how fast T advances. Event times stay where the log put them.
+ */
 export function rateFactorAt(tl: Timeline, T: number): number {
-  return episodes(tl).some((e) => T >= e.start - 0.6 && T <= Math.min(e.end, e.start + 14) + 0.5) ? 0.5 : 1;
+  const knockdown = episodes(tl).some((e) => T >= e.start - 0.6 && T <= Math.min(e.end, e.start + 14) + 0.5) ? 0.5 : 1;
+  return Math.min(knockdown, hardLandRate(segmentAt(tl, T), T));
 }
 
 // ---------------------------------------------------------------- fight positions
@@ -359,49 +436,59 @@ function resultLayout(tl: Timeline, seg: Segment, T: number): Layout {
 
 // ---------------------------------------------------------------- what the arms are doing
 export interface ArmActivity {
-  punch: { punch: Punch; hand: "lead" | "rear"; ext: number; outcome: string; target: "head" | "body" } | null;
-  hit: { amount: number; k: number; target: "head" | "body" } | null;
-  slip: number; // 0..1 lean
-  block: boolean;
+  punch: (ThrowInfo & { ext: number }) | null;
+  hit: { amount: number; k: number; target: "head" | "body"; punch: Punch; hand: "lead" | "rear"; attacker: Side } | null;
+  slip: { amount: number; punch: Punch; hand: "lead" | "rear"; attacker: Side } | null;
+  /** Gloves held in the guard, either because that is the action or a block just happened. */
+  guarding: boolean;
+  recoil: { amount: number; punch: Punch; hand: "lead" | "rear"; attacker: Side } | null;
   moving: boolean;
   clinch: boolean;
   bob: number;
 }
 
-export const PUNCH_OUT = 0.25; // throw -> impact, matches the engine's land offset
-export const PUNCH_BACK = 0.4;
-
-/** Extension 0..1 for a punch thrown at T0. */
-export function punchExtension(T: number, T0: number): number {
-  const t = T - T0;
-  if (t < 0 || t > PUNCH_OUT + PUNCH_BACK) return 0;
-  if (t <= PUNCH_OUT) return Math.sin((t / PUNCH_OUT) * (Math.PI / 2));
-  return 1 - smooth((t - PUNCH_OUT) / PUNCH_BACK);
+/** Extension 0..1. Peaks at `peak`, the outcome time taken from the log. */
+export function punchExtension(T: number, throwT: number, peak: number): number {
+  return extensionAt(T, throwT, peak);
 }
 
 export function activityAt(tl: Timeline, side: Side, T: number): ArmActivity {
   const seg = segmentAt(tl, T);
-  const act: ArmActivity = { punch: null, hit: null, slip: 0, block: false, moving: false, clinch: false, bob: Math.sin(T * 2.3 + (side === "a" ? 0 : 1.7)) };
+  const act: ArmActivity = {
+    punch: null,
+    hit: null,
+    slip: null,
+    guarding: false,
+    recoil: null,
+    moving: false,
+    clinch: false,
+    bob: Math.sin(T * 2.3 + (side === "a" ? 0 : 1.7)),
+  };
   if (seg.kind !== "exchange") return act;
   const info = segInfo(seg);
   const current = actionAt(seg, side, T);
   act.moving = current === "move";
   act.clinch = clinchedAt(seg, T);
-  act.block = current === "block" || info.blocks[side].some((t) => Math.abs(T - t) < 0.45);
+  act.guarding = current === "block" || info.blocks[side].some((b) => Math.abs(T - b.T) < 0.45);
   for (const th of info.throws[side]) {
-    const ext = punchExtension(T, th.T);
-    if (ext > 0 && (!act.punch || ext > act.punch.ext)) act.punch = { punch: th.punch, hand: th.hand, ext, outcome: th.outcome, target: th.target };
+    const ext = extensionAt(T, th.T, th.peak);
+    if (ext > 0 && (!act.punch || ext > act.punch.ext)) act.punch = { ...th, ext };
   }
   for (const h of info.hits[side]) {
-    const t = T - h.T;
-    if (t >= 0 && t < 0.9) {
-      const k = Math.sin(Math.min(1, t / 0.12) * (Math.PI / 2)) * (1 - smooth((t - 0.12) / 0.75));
-      if (!act.hit || k * h.damage > act.hit.k * act.hit.amount) act.hit = { amount: h.damage, k, target: h.target };
+    const k = landEnvelope(T - h.T);
+    if (k > 0 && (!act.hit || k * h.damage > act.hit.k * act.hit.amount)) {
+      act.hit = { amount: h.damage, k, target: h.target, punch: h.punch, hand: h.hand, attacker: h.attacker };
     }
   }
-  for (const t of info.slips[side]) {
-    const d = T - (t - 0.15);
-    if (d >= 0 && d < 0.8) act.slip = Math.max(act.slip, Math.sin((d / 0.8) * Math.PI));
+  for (const s of info.slips[side]) {
+    const amount = slipEnvelope(T - s.T);
+    if (amount > (act.slip?.amount ?? 0)) act.slip = { amount, punch: s.punch, hand: s.hand, attacker: s.attacker };
+  }
+  for (const b of info.blocks[side]) {
+    const amount = recoilEnvelope(T - b.T);
+    // Amount is 0 at the logged block itself, which is when the gloves have to be touching.
+    const meeting = Math.abs(T - b.T) <= 0.02;
+    if (meeting || amount > (act.recoil?.amount ?? -1)) act.recoil = { amount, punch: b.punch, hand: b.hand, attacker: b.attacker };
   }
   return act;
 }
