@@ -4,6 +4,10 @@ import type { Punch, Side } from "@llm-boxing-arena/engine";
 import type { Segment } from "../playback/timeline";
 
 export const HARD_LAND = 1.4;
+/** Metres between head bones. Two skulls this size no longer occupy the same space. */
+export const MIN_HEAD_GAP = 0.38;
+/** Metres between abdomen bones. Keeps the chests from merging when someone steps in. */
+export const MIN_TORSO_GAP = 0.46;
 export const PUNCH_BACK = 0.4;
 export const SWEAT_COUNT = 6;
 
@@ -134,12 +138,12 @@ export function contactKind(outcome: string, target: "head" | "body"): ContactKi
  * +x is the defender's left, +y is up, +z is toward the attacker (the defender's forward).
  */
 export function contactOffset(kind: ContactKind, arrival: 1 | -1, target: "head" | "body"): { x: number; y: number; z: number } {
-  if (kind === "chin") return { x: 0, y: -0.07, z: 0.07 };
-  if (kind === "body") return { x: arrival * 0.05, y: 0.02, z: 0.12 };
-  if (kind === "guard") return { x: arrival * 0.07, y: -0.01, z: 0.2 };
-  // Empty air on the side the punch is coming from, clear of the skull or the ribs.
-  if (target === "body") return { x: arrival * 0.26, y: 0.02, z: 0.1 };
-  return { x: arrival * 0.24, y: -0.02, z: 0.06 };
+  // z is toward the attacker, so the glove centre sits outside the mesh instead of inside it.
+  if (kind === "chin") return { x: 0, y: -0.09, z: 0.22 };
+  if (kind === "body") return { x: arrival * 0.04, y: 0.02, z: 0.24 };
+  if (kind === "guard") return { x: arrival * 0.08, y: 0.0, z: 0.3 };
+  if (target === "body") return { x: arrival * 0.28, y: 0.02, z: 0.16 };
+  return { x: arrival * 0.28, y: -0.02, z: 0.1 };
 }
 
 /** Clock rate only. 1 most of the time, dipping under 1 for a fraction of a second after a hard land. */

@@ -51,7 +51,8 @@ try {
   await page.selectOption("[data-testid=demo-blue]", "swarmer");
   await page.click("[data-testid=start-fight]");
   await page.waitForSelector("[data-testid=watch]", { timeout: 30000 });
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(800);
+  await page.addStyleTag({ content: ".hud-top,.commentary,.controls{visibility:hidden !important}" });
   await page.evaluate(() => {
     window.__arena.store.playing = false;
     window.__arena.store.autoReplay = false;
@@ -98,14 +99,25 @@ try {
       const ax = layout.b.pos.x - layout.a.pos.x;
       const az = layout.b.pos.z - layout.a.pos.z;
       const len = Math.hypot(ax, az) || 1;
-      const px = -az / len;
-      const pz = ax / len;
+      let px = -az / len;
+      let pz = ax / len;
       const mx = (layout.a.pos.x + layout.b.pos.x) / 2;
       const mz = (layout.a.pos.z + layout.b.pos.z) / 2;
-      arena.camLock = {
-        pos: [mx + px * 2.15, 2.32, mz + pz * 2.15],
-        look: [mx, 2.02, mz],
-      };
+      const ref = layout.ref.pos;
+      // Opposite the referee, and inside the ropes so a post never fills the lens.
+      if (px * (ref.x - mx) + pz * (ref.z - mz) > 0) {
+        px = -px;
+        pz = -pz;
+      }
+      let dist = 2.7;
+      let cx = mx + px * dist;
+      let cz = mz + pz * dist;
+      while ((Math.abs(cx) > 2.25 || Math.abs(cz) > 2.25) && dist > 1.7) {
+        dist -= 0.1;
+        cx = mx + px * dist;
+        cz = mz + pz * dist;
+      }
+      arena.camLock = { pos: [cx, 1.62, cz], look: [mx, 1.95, mz] };
     }, T);
   }
 

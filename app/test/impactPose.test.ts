@@ -13,10 +13,12 @@ import {
   contactKind,
   extensionAt,
   HARD_LAND,
+  MIN_HEAD_GAP,
+  MIN_TORSO_GAP,
   reactionFor,
   type Reaction,
 } from "../src/scene/impact";
-import { poseFightersAt, type ContactSample } from "../src/scene/pose";
+import { anchorSeparation, poseFightersAt, type ContactSample } from "../src/scene/pose";
 import { BASE_SCALE, CharacterRig, type Look } from "../src/scene/rig";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -194,10 +196,14 @@ describe("glove meets the logged target", () => {
       const defender = rigs[other(p.attacker)];
       const head = defender.world("head");
       if (hit.kind === "chin") {
-        expect(point.distanceTo(head), key).toBeLessThan(0.2);
+        const fromHead = point.distanceTo(head);
+        expect(fromHead, key).toBeGreaterThan(0.16);
+        expect(fromHead, key).toBeLessThan(0.32);
         expect(point.y, key).toBeLessThan(head.y);
       } else if (hit.kind === "body") {
-        expect(point.distanceTo(defender.world("abdomen")), key).toBeLessThan(0.25);
+        const fromBody = point.distanceTo(defender.world("abdomen"));
+        expect(fromBody, key).toBeGreaterThan(0.16);
+        expect(fromBody, key).toBeLessThan(0.36);
       } else if (hit.kind === "guard") {
         const yaw = layoutAt(tl, p.peak)[other(p.attacker)].yaw;
         const fwd = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
@@ -209,6 +215,45 @@ describe("glove meets the logged target", () => {
       }
     }
     expect(seen.size).toBeGreaterThan(8);
+  });
+});
+
+describe("fighters keep a body gap", () => {
+  it("head and torso anchors stay apart across a seeded fight", async () => {
+    const log = await demoLog(11);
+    const tl = buildTimeline(log);
+    const gltf = await loadBoxer();
+    const rigs = {
+      a: new CharacterRig(gltf.scene, gltf.animations, lookFor("a", log.builds.a)),
+      b: new CharacterRig(gltf.scene, gltf.animations, lookFor("b", log.builds.b)),
+    };
+    const lead = {
+      a: (log.builds.a.stance === "southpaw" ? "R" : "L") as "L" | "R",
+      b: (log.builds.b.stance === "southpaw" ? "R" : "L") as "L" | "R",
+    };
+    const times: number[] = [];
+    for (const seg of tl.segments) {
+      if (seg.kind !== "exchange") continue;
+      for (const th of throwsIn(seg)) times.push(th.peak);
+      for (let t = seg.start; t < seg.start + seg.duration; t += 1.5) times.push(t);
+    }
+    expect(times.length).toBeGreaterThan(40);
+    let minHead = Infinity;
+    let minTorso = Infinity;
+    let samples = 0;
+    for (const T of times) {
+      const layout = layoutAt(tl, T);
+      if (layout.a.mode === "down" || layout.b.mode === "down") continue;
+      if (layout.a.mode === "rising" || layout.b.mode === "rising") continue;
+      poseFightersAt(rigs, tl, T, lead, { a: false, b: false });
+      const gap = anchorSeparation(rigs.a, rigs.b);
+      minHead = Math.min(minHead, gap.head);
+      minTorso = Math.min(minTorso, gap.torso);
+      samples++;
+    }
+    expect(samples).toBeGreaterThan(30);
+    expect(minHead).toBeGreaterThanOrEqual(MIN_HEAD_GAP - 0.01);
+    expect(minTorso).toBeGreaterThanOrEqual(MIN_TORSO_GAP - 0.01);
   });
 });
 

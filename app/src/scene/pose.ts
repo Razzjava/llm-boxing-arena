@@ -12,6 +12,8 @@ import {
   contactOffset,
   flashIntensity,
   hardImpactAt,
+  MIN_HEAD_GAP,
+  MIN_TORSO_GAP,
   punchingHand,
   reactionFor,
   sweatDrops,
@@ -187,6 +189,58 @@ function gloveAlong(rig: CharacterRig, hand: "L" | "R"): number {
   return glove.getWorldPosition(new THREE.Vector3()).distanceTo(wrist) || 0.07;
 }
 
+/** Head-bone and abdomen-bone gaps after the pose has been applied. */
+export function anchorSeparation(a: CharacterRig, b: CharacterRig): { head: number; torso: number } {
+  return {
+    head: a.world("head").distanceTo(b.world("head")),
+    torso: a.world("abdomen").distanceTo(b.world("abdomen")),
+  };
+}
+
+/**
+ * Slide the roots apart along the floor until the head bones and the abdomen bones
+ * are at least MIN_HEAD_GAP / MIN_TORSO_GAP apart. The arm reaches from there;
+ * the bodies do not.
+ */
+function separateFighters(a: CharacterRig, b: CharacterRig) {
+  for (let i = 0; i < 3; i++) {
+    a.root.updateMatrixWorld(true);
+    b.root.updateMatrixWorld(true);
+    const gap = anchorSeparation(a, b);
+    const short = Math.max(MIN_HEAD_GAP - gap.head, MIN_TORSO_GAP - gap.torso);
+    if (short <= 0.004) return;
+    const abdA = a.world("abdomen");
+    const abdB = b.world("abdomen");
+    const dx = abdB.x - abdA.x;
+    const dz = abdB.z - abdA.z;
+    const len = Math.hypot(dx, dz) || 1;
+    const half = short / 2 + 0.008;
+    a.root.position.x -= (dx / len) * half;
+    a.root.position.z -= (dz / len) * half;
+    b.root.position.x += (dx / len) * half;
+    b.root.position.z += (dz / len) * half;
+  }
+  a.root.updateMatrixWorld(true);
+  b.root.updateMatrixWorld(true);
+}
+
+/** Move the attacker so the glove closes `err`, but never through the other fighter. */
+function nudgeWithinGap(attacker: CharacterRig, defender: CharacterRig, err: THREE.Vector3) {
+  const abdA = attacker.world("abdomen");
+  const abdB = defender.world("abdomen");
+  const axis = new THREE.Vector3(abdB.x - abdA.x, 0, abdB.z - abdA.z);
+  if (axis.lengthSq() < 1e-6) axis.set(0, 0, 1);
+  axis.normalize();
+  const closing = Math.max(0, err.x * axis.x + err.z * axis.z);
+  const gap = anchorSeparation(attacker, defender);
+  const slack = Math.min(gap.head - MIN_HEAD_GAP, gap.torso - MIN_TORSO_GAP);
+  const used = Math.min(closing, Math.max(0, slack - 0.008));
+  attacker.root.position.x += err.x - axis.x * closing + axis.x * used;
+  attacker.root.position.y += err.y;
+  attacker.root.position.z += err.z - axis.z * closing + axis.z * used;
+  attacker.root.updateMatrixWorld(true);
+}
+
 /** Slide bodies so `wristTarget` is inside the punching arm's reach. Contact locals stay valid. */
 function bringWithinReach(attacker: CharacterRig, defender: CharacterRig, wristTarget: THREE.Vector3, shoulder: BoneKey, defenderCanSlide: boolean) {
   attacker.root.updateMatrixWorld(true);
@@ -358,30 +412,22 @@ export function poseFightersAt(
     const aimed = aimFor(side);
     if (!aimed) continue;
     const wrist = wristFor(side, aimed.aim, aimed.bone, aimed.shoulder);
-    // Last few centimetres: move only the attacker, so the contact point stays put.
     bringWithinReach(aimed.attacker.rig, aimed.defender.rig, wrist, aimed.shoulder, false);
-    const settled = aimFor(side);
-    if (!settled) continue;
-    const pole = settled.attacker.rig.world(settled.shoulder).addScaledVector(settled.punch.punch === "hook" ? settled.sideVec : UP, settled.punch.punch === "hook" ? 0.55 : -0.65);
-    solveGlove(settled.attacker.rig, settled.bone, settled.aim, pole, 1);
   }
-  // IK can stop a glove's width short when the elbow won't lock. Shift that boxer the rest of the way.
-  // Doing it after both arms are solved, and repeating, keeps a two-punch exchange from dragging the target off.
-  for (let n = 0; n < 4; n++) {
-    let moved = false;
+  // The lunge can leave the chests overlapping. Put the gap back, then let the arm cover it.
+  if (!bodies.a.act.clinch && !bodies.b.act.clinch) separateFighters(bodies.a.rig, bodies.b.rig);
+  for (let pass = 0; pass < 2; pass++) {
     for (const side of ["a", "b"] as const) {
-      const aimed = aimFor(side);
-      const glove = aimed && aimed.attacker.rig.gloves[aimed.bone];
-      if (!aimed || !glove) continue;
-      const got = glove.getWorldPosition(new THREE.Vector3());
-      const err = aimed.aim.clone().sub(got);
-      if (err.length() < 0.012) continue;
-      if (err.length() > 0.22) err.multiplyScalar(0.22 / err.length());
-      aimed.attacker.rig.root.position.add(err);
-      aimed.attacker.rig.root.updateMatrixWorld(true);
-      moved = true;
+      const settled = aimFor(side);
+      if (!settled) continue;
+      const pole = settled.attacker.rig.world(settled.shoulder).addScaledVector(settled.punch.punch === "hook" ? settled.sideVec : UP, settled.punch.punch === "hook" ? 0.55 : -0.65);
+      solveGlove(settled.attacker.rig, settled.bone, settled.aim, pole, 1);
+      const glove = settled.attacker.rig.gloves[settled.bone];
+      if (!glove) continue;
+      const err = settled.aim.clone().sub(glove.getWorldPosition(new THREE.Vector3()));
+      if (err.length() < 0.012 || err.length() > 0.2) continue;
+      nudgeWithinGap(settled.attacker.rig, settled.defender.rig, err);
     }
-    if (!moved) break;
   }
   for (const side of ["a", "b"] as const) {
     const settled = aimFor(side);
