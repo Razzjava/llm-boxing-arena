@@ -16,8 +16,9 @@ Between rounds choose a tactic: "pressure" (aggressive), "box" (balanced) or "su
 export function buildSystem(corner: "red" | "blue"): string {
   return `${RULES}
 You are in the ${corner.toUpperCase()} corner. First, create your boxer.
+Invent an original stage name (a ring name), such as "The Ghost" or "Iron Tide". Real people's names are not allowed: no real or historical boxers, athletes, celebrities, politicians or other real people, and no realistic first-and-last personal name.
 Reply with ONLY a JSON object, no prose:
-{"name": string (max 24 chars), "nickname": string, "stance": "orthodox"|"southpaw",
+{"name": string (max 24 chars, stage name only), "nickname": string (stage name only), "stance": "orthodox"|"southpaw",
  "style": "out-boxer"|"swarmer"|"slugger"|"counter-puncher",
  "stats": {"power": n, "speed": n, "accuracy": n, "defence": n, "chin": n, "stamina": n}}
 Each stat is a whole number 1-10 and the six stats must total exactly 30.`;

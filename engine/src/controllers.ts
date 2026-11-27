@@ -1,5 +1,7 @@
 // Scripted demo boxers: no keys needed, used for demo mode, tests and balance checks.
 // They are deterministic: the same view always gives the same plan.
+// The display names are part of the seeded fight logs (including samples/demo-fight-seed-11.json).
+// A new model pick is held to stage names; these scripted builds are not renamed.
 import type { Action, BoxerBuild, Plan, Tactic } from "./types.js";
 import type { FightStateView } from "./state.js";
 import type { Controller } from "./fight.js";

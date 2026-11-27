@@ -1,5 +1,8 @@
 // Boxer builds: strict checks. An illegal model build aborts the match; nothing is repaired or replaced.
+// A new pick must be a stage name. checkBuild stays structural so a saved fight log still replays,
+// even when its boxer was given a personal name.
 import type { BoxerBuild, Stance, Stats, Style } from "./types.js";
+import { usesRealPersonName } from "./stageNames.js";
 
 export const STAT_KEYS = ["power", "speed", "accuracy", "defence", "chin", "stamina"] as const;
 export const STAT_TOTAL = 30;
@@ -31,9 +34,15 @@ export function checkBuild(build: unknown): string[] {
 
 export type AcceptedBuild = { ok: true; build: BoxerBuild } | { ok: false; reason: string };
 
+/** Shown when a new pick uses a real person instead of a stage name. */
+export function realPersonReason(shown: string): string {
+  return `used a real person's name ("${shown}"); stage names only`;
+}
+
 /**
  * Accept a build that already passes {@link checkBuild}. Display text is cleaned; stats are copied
- * unchanged. Anything illegal is an unusable response, not a default fighter.
+ * unchanged. A real person's name is an unusable response, not a default fighter.
+ * {@link checkBuild} does not apply this rule, so replaying a saved log does not re-judge names.
  */
 export function acceptBuild(raw: unknown): AcceptedBuild {
   const errors = checkBuild(raw);
@@ -42,11 +51,14 @@ export function acceptBuild(raw: unknown): AcceptedBuild {
     return { ok: false, reason: `unusable response: ${detail}` };
   }
   const stats = raw.stats as unknown as Stats;
+  const name = cleanText(String(raw.name), NAME_MAX);
   const nickname = typeof raw.nickname === "string" ? cleanText(raw.nickname, NAME_MAX) : "";
+  const banned = (usesRealPersonName(name) ? name : null) ?? (nickname && usesRealPersonName(nickname) ? nickname : null);
+  if (banned) return { ok: false, reason: realPersonReason(banned) };
   return {
     ok: true,
     build: {
-      name: cleanText(String(raw.name), NAME_MAX),
+      name,
       nickname,
       stance: raw.stance as Stance,
       style: raw.style as Style,

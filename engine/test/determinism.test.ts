@@ -28,6 +28,17 @@ describe("determinism and replay", () => {
     }
   });
 
+  it("a saved log still replays when a boxer name would be rejected on a new pick", async () => {
+    const log = await demoFight(11);
+    const renamed = JSON.parse(JSON.stringify(log)) as FightLog;
+    renamed.builds.a.name = "Mike Tyson";
+    renamed.finalState.a.build.name = "Mike Tyson";
+    const replayed = await replayFight(renamed);
+    expect(replayed.result).toEqual(renamed.result);
+    expect(replayed.rounds).toEqual(renamed.rounds);
+    expect(JSON.stringify(replayed)).toBe(JSON.stringify(renamed));
+  });
+
   it("resolveExchange does not mutate the state passed in", () => {
     const state = createFight(OUT, SLUG);
     const before = JSON.stringify(state);
